@@ -1,6 +1,8 @@
 
 const pad = require('pad');
 const numeral = require('numeral');
+const momenttimezone = require('moment-timezone');
+const TIMEZONE = 'Asia/Seoul';
 
 const coinConfig = require('./coinConfig.js');
 const CURRENCY = process.env.CURRENCY;
@@ -15,11 +17,12 @@ exports.attach = (nv, cf) => buildAttach(nv, cf);
 function buildAttach(nv, cf) {
     try {
         let prev = '';
-        nv.prevValues.map (_ => {
-            prev += _.date.substring(11) + npadBlank(_.close) + ' (' + npercent((nv.close - _.close) / _.close) + ')  ' + _.volume + '\n';
-        });
+        for (let i = 0; i < 5; i++) {
+            prev += momenttimezone(new Date(nv.pEpoch[i] * 1000)).tz(TIMEZONE).format('HH:mm');
+            prev += npadBlank(nv.pClose[i]) + ' (' + npercent((nv.close - nv.pClose[i]) / nv.pClose[i]) + ')  ' + nv.pVolume[i] + '\n';
+        }
         const delta = (nv.periodMax - nv.periodMin) / 30;
-        prev += '<' + pad((nv.close - nv.periodMin) / delta,'*', '-') + pad((nv.periodMax - nv.close) / delta, '>','-');
+        prev += '|' + pad((nv.close - nv.periodMin) / delta,'*', '-') + pad((nv.periodMax - nv.close) / delta, '|','-');
 
         return new coinConfig(CURRENCY)
 

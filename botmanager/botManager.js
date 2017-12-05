@@ -16,7 +16,7 @@ const show = require('./showStatus.js');
 const replier = require('./replier.js');
 const who = require('./getSlackName.js');
 const roundTo = require('round-to');
-const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
+const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/';
 
 // CONFIGRATION && LOGGER
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
@@ -49,7 +49,7 @@ const BOT_TOKEN = process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
 
 function showUsage() {
     const header =  'Monitor CrytoCoins [' + process.env.COINS_KEY + ']';
-    const usage = '*USAGE*             _(Ver. 2017-11-27)_\n' +
+    const usage = '*USAGE*             _(Ver. 2017-12-05)_\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
         '      {' + coins_cmd + 'n}  {bsaghn}  {(+-)123(k%)}\n' +
         '_Refer github_ README.md _for more detail_\nhttps://goo.gl/vKF1vk'; // https://github.com/kykim79/BitcoinTracker#usage';
@@ -65,14 +65,14 @@ let updateCoin = (match) => {
     showCoin(match);
 };
 
-let showCoin = (match) => show.info(COINS_KEY[COINS_CMD.indexOf(match[1])], 'Current Configuration Values');
+let showCoin = (match) => show.info(COINS_KEY[COINS_CMD.indexOf(match[1])], 'Current Values');
 
 let adjustConfig = (match) => {
     const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];
     const response = (value) => adjustSellBuy(cointype, value);
-    Promise.try(() => bhttp.get(BITHUMB_URL +  cointype))
+    Promise.try(() => bhttp.get(CRYPTOWATCH_URL +  cointype + 'krw/price'))
         .then(response)
-        .then(attach => replier.sendAttach(cointype, 'Sell, Buy Price Adjusted', [attach]))
+        .then(() => show.info(cointype, 'Sell, Buy Price Adjusted'))
         .catch(e => logger.error(e));
 };
 
@@ -211,11 +211,11 @@ function adjustSellBuy(cointype, value) {
     try {
         const configFile = CONFIG + cointype.toLowerCase() + '/' + CONFIG_FILENAME;
         const cf = JSON.parse(fs.readFileSync(configFile));
-        const n = Number(value.body.data[0].price);
-        cf.buyPrice = roundTo(n * (1 - cf.gapAllowance * 3),0);
-        cf.sellPrice = roundTo(n * (1 + cf.gapAllowance * 3),0);
+        const price = Number(value.body.result.price);
+        cf.buyPrice = roundTo(price * (1 - cf.gapAllowance * 3),0);
+        cf.sellPrice = roundTo(price * (1 + cf.gapAllowance * 3),0);
         fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
-        return show.attach(cointype, value);
+        // return show.attach(cointype, value);
     }
     catch (e) {
         logger.error(e);

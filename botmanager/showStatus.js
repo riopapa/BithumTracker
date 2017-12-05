@@ -11,9 +11,10 @@ const coinConfig = require('./coinConfig.js');
 const replier = require('./replier.js');
 
 const NPAD_SIZE = Number(process.env.NPAD_SIZE);
+const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
 const npadBlank = (number) => pad(NPAD_SIZE + 5, numeral((number)).format('0,0'));
 const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
-const BITHUMB_URL = 'https://api.bithumb.com/public/recent_transactions/';
+const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/';
 
 // CONFIGRATION && LOGGER
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
@@ -25,11 +26,10 @@ const LOG = process.env.LOG;
 const TREND_FILENAME =  process.env.TREND_FILENAME;
 
 exports.info = (coin, msg) => showCoinStatus(coin, msg);
-exports.attach = (coin, value) => buildAttach(coin, value);
 
 function showCoinStatus(coin, msg) {
     const response = (value) => buildAttach(coin, value);
-    Promise.try(() => bhttp.get(BITHUMB_URL +  coin))
+    Promise.try(() => bhttp.get(CRYPTOWATCH_URL +  coin + 'krw/summary'))
         .then(response)
         .then(attach => {
             replier.sendAttach(coin, msg, [attach]);
@@ -40,27 +40,42 @@ function showCoinStatus(coin, msg) {
 function buildAttach(coin, value) {
     try {
         const cf = JSON.parse(fs.readFileSync(CONFIG + coin.toLowerCase() + '/' + CONFIG_FILENAME));
-        const nowPrice = Number(value.body.data[0].price);
-        const volume = value.body.data.map(_ => Number(_.units_traded)).reduce((e1, e2) => e1 + e2);
-        let short = true;
+        const result = value.body.result;
+        logger.debug(result);
+        const price = Number(result.price.last);
+        const high = Number(result.price.high);
+        const low = Number(result.price.low);
+        const changePercent = roundTo(Number(result.price.change.percentage),4);
+        // const changePrice = Number(result.price.change.absolute);
+        const volume = roundTo(Number(result.volume),0);
+        let trendShort = true;
         let trendLastTitle = '';
         let trendLastText = '';
-        const stats = fs.statSync(LOG + coin.toLowerCase() + '/' + TREND_FILENAME);
-        if ((new Date() - stats.mtime) > 600000) {    // if last trend log is before 10 min, then
-            trendLastTitle = 'Tracker stopped ' +  + roundTo((new Date() - stats.mtime) / 60000,0) + ' min. ago' ;
-            trendLastText = 'Last trend log time is  ' + momenttimezone(new Date(stats.mtime)).tz('Asia/Seoul').format('YY-MM-DD HH:mm');
-            short = false;
+        const trendLog = LOG + coin.toLowerCase() + '/' + TREND_FILENAME;
+        if(fs.existsSync(trendLog)) {
+            const stats = fs.statSync(trendLog);
+            if ((new Date() - stats.mtime) > 600000) {    // if last trend log is before 10 min, then
+                trendLastTitle = 'Tracker stopped ' + +roundTo((new Date() - stats.mtime) / 60000, 0) + ' min. ago';
+                trendLastText = 'Last trend log time is  ' + momenttimezone(new Date(stats.mtime)).tz('Asia/Seoul').format('YY-MM-DD HH:mm');
+                trendShort = false;
+            }
         }
-
-        return new coinConfig(coin)
-            .addField('Buy:     ' + npercent((nowPrice - cf.buyPrice ) / nowPrice), npadBlank(cf.buyPrice))
-            .addField('gapAllow ' + npercent(cf.gapAllowance), npadBlank(cf.gapAllowance * nowPrice))
-            .addField('Now:', npadBlank(nowPrice))
-            .addField('histo(div) ' + npercent(cf.histoPercent), npadBlank(cf.histoPercent * nowPrice))
-            .addField('Sell:     ' + npercent((cf.sellPrice - nowPrice) / nowPrice),  npadBlank(cf.sellPrice))
-            .addField('volume ', '        ' + numeral(volume).format('0,0.00'))
-            .addField(trendLastTitle,trendLastText, short)
+        else {
+            trendLastTitle = 'Tracker not started ';
+            trendLastText = 'No trend log file yet ' + trendLog;
+            trendShort = false;
+        }
+        let coinConf = new coinConfig(coin)
+            .addField('Sell:     ' + npercent((cf.sellPrice - price) / price),  npadBlank(cf.sellPrice))
+            .addField('High: ' + npad(high), 'Low : ' + npad(low))
+            .addField('Buy:     ' + npercent((price - cf.buyPrice ) / price), npadBlank(cf.buyPrice))
+            .addField('24hr Change ', npercent(changePercent))
+            .addField('volume ', '        ' + npad(volume))
+            .addField('gapAllow ' + npercent(cf.gapAllowance), npadBlank(cf.gapAllowance * price))
+            .addField(trendLastTitle,trendLastText, trendShort)
         ;
+        coinConf.title += '   ' + npadBlank(price);
+        return coinConf;
     } catch (e) {
         throw new Error(e);
     }

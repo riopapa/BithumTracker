@@ -1,5 +1,7 @@
 const format = require('string-format');
 format.extend(String.prototype);
+const momenttimezone = require('moment-timezone');
+const TIMEZONE = 'Asia/Seoul';
 
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
@@ -39,7 +41,7 @@ let isFirstTime = true; // inform current setting when this module is started
 let config = readConfigFile(CONFIG_FILE).data;
 let sellBoundaryCount = 0;
 let buyBoundaryCount = 0;
-let nowValues;
+let nowValues = {};
 
 watcher.add(CONFIG_FILE);
 watcher.on('change', (info) => {
@@ -52,8 +54,8 @@ watcher.on('change', (info) => {
 
 const volumeCOUNT = 3;   // if recent volume goes high then...
 
-const ohlcBuilder = require('./ohlcBuilder.js');
-ohlcBuilder.getEmitter().on('event', listener);
+const ohlcCrawler = require('./ohlcCrawler.js');
+ohlcCrawler.getEmitter().on('event', listener);
 
 const SELL = 'S';
 const BUY = 'B';
@@ -70,21 +72,22 @@ const BUY = 'B';
  * @return none
  */
 
-function listener(ohlcs) {
+function listener({epochs, highs, lows, closes, volumes}) {
 
-    const closes = ohlcs.map(_ => _.close);
-    const highs = ohlcs.map(_ => _.high);
-    const lows = ohlcs.map(_ => _.low);
-    const volumes = ohlcs.map(_ => _.volume);
+    let tableLen = epochs.length;
+    logger.debug('epochs length ' + tableLen);
 
     let macds = calculateMACD(closes);
     let stochastic = calculateStochastic(highs, lows, closes);
 
     let tableSize = macds.length;
 
-    nowValues = ohlcs[ohlcs.length - 1];
-
-    nowValues.prevValues = [ohlcs[ohlcs.length - 3], ohlcs[ohlcs.length - 5], ohlcs[ohlcs.length - 7], ohlcs[Math.trunc(ohlcs.length / 2)], ohlcs[0]];
+    nowValues.epoch = epochs[tableLen - 1] * 1000;
+    nowValues.close = closes[tableLen - 1];
+    nowValues.volume = volumes[tableLen - 1];
+    nowValues.pEpoch = [epochs[tableLen - 3], epochs[tableLen - 5], epochs[tableLen - 7], epochs[Math.trunc(tableLen / 2)], epochs[0]] ;
+    nowValues.pClose = [closes[tableLen - 3], closes[tableLen - 5], closes[tableLen - 7], closes[Math.trunc(tableLen / 2)], closes[0]];
+    nowValues.pVolume = [volumes[tableLen - 3], volumes[tableLen - 5], volumes[tableLen - 7], volumes[Math.trunc(tableLen / 2)], volumes[0]] ;
     nowValues.periodMax = Math.max(...highs);
     nowValues.periodMin = Math.min(...lows);
 
@@ -185,12 +188,15 @@ function calculateStochastic(highs, lows, closes) {
 function analyzeHistogram() {
 
     if (nowValues.histoSign) {
+        let sellHisto = config.sellPrice * (1 - config.gapAllowance / 2);
+        let buyHisto = config.buyPrice * (1 + config.gapAllowance / 2);
+
         let msg = '';
-        if (nowValues.close > nowValues.sellTarget) {
+        if (nowValues.close > sellHisto) {
             nowValues.tradeType = SELL;
             msg = (nowValues.close > config.sellPrice) ? 'Histo SAYS SELL, SELL' : 'Histo says sell';
         }
-        else if (nowValues.close < nowValues.buyTarget) {
+        else if (nowValues.close < buyHisto) {
             nowValues.tradeType = BUY;
             msg = (nowValues.close < config.buyPrice) ? 'Histo SAYS BUY, BUY' : 'Histo says buy';
         }
@@ -253,13 +259,13 @@ function analyzeBoundary() {
         msg = '';
     }
 
-    if (nowValues.close < nowValues.prevValues[2].close * (1 - UPDOWN_PERCENT)) {
+    if (nowValues.close < nowValues.pClose[2] * (1 - UPDOWN_PERCENT)) {
         nowValues.tradeType = SELL;
-        msg = 'Fast Price DOWN (' + roundTo((nowValues.close - nowValues.prevValues[2].close) / nowValues.close * 100,0) + '%)';
+        msg = 'Fast Price DOWN (' + roundTo((nowValues.close - nowValues.pClose[2]) / nowValues.close * 100,0) + '%)';
     }
-    else if (nowValues.close > nowValues.prevValues[2].close * (1 + UPDOWN_PERCENT)) {
+    else if (nowValues.close > nowValues.pClose[2] * (1 + UPDOWN_PERCENT)) {
         nowValues.tradeType = BUY;
-        msg = 'Fast Price UP (' + roundTo((nowValues.close - nowValues.prevValues[2].close) / nowValues.close * 100,0) + '%)';
+        msg = 'Fast Price UP (' + roundTo((nowValues.close - nowValues.pClose[2]) / nowValues.close * 100,0) + '%)';
     }
     appendMsg(msg);
 }
@@ -307,8 +313,8 @@ function appendMsg(msg) {
 function informTrade() {
 
     let attach = show.attach(nowValues,config);
-    attach.title += '   ' + nowValues.date.substring(5);
-    replier.sendAttach(CURRENCY, nowValues.msgText, [attach]);
+    attach.title += '   ' + momenttimezone(new Date(nowValues.epoch)).tz(TIMEZONE).format('MM-DD HH:mm'),
+        replier.sendAttach(CURRENCY, nowValues.msgText, [attach]);
 
 }
 
@@ -322,9 +328,10 @@ function informTrade() {
 function keepLog() {
 
     try {
+
         let str = [
             CURRENCY,
-            nowValues.date,
+            momenttimezone(new Date(nowValues.epoch)).tz(TIMEZONE).format('YY-MM-DD HH:mm'),
             nowValues.close,
             nowValues.volume,
             nowValues.volumeAvr,
