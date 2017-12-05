@@ -26,7 +26,6 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-   - ./chartData/:/app/chartData/
   image: riopapa/coin_tracker
 
  tracker_btc:
@@ -41,7 +40,6 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-   - ./chartData/:/app/chartData/
   image: riopapa/coin_tracker
 
  tracker_eth:
@@ -56,7 +54,6 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-   - ./chartData/:/app/chartData/
   image: riopapa/coin_tracker
 
  tracker_btg:
@@ -71,6 +68,5 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-   - ./chartData/:/app/chartData/
   image: riopapa/coin_tracker
 

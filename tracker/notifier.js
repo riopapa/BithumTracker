@@ -10,7 +10,7 @@ const ICON_URL = process.env.ICON_URL + CURRENCY + '.png';
 const COINS_KEY = process.env.COINS_KEY.split(',');
 const COINS_CMD = process.env.COINS_CMD.split(',');
 
-const CHART_URL = process.env.CHART_URL + COINS_KEY.indexOf(CURRENCY);
+const CHART_URL = 'https://cryptowat.ch/bithumb/' + currency + 'krw/3m';
 const TRACKER_NAME = process.env.TRACKER_NAME;
 
 let log4js = require('log4js');

@@ -1,5 +1,5 @@
 
-const CHART_URL = 'https://cryptowat.ch/bithumb/'; // btckrw/3m'
+const CHART_URL = 'https://cryptowat.ch/bithumb/';
 const COINS_KEY = process.env.COINS_KEY.split(',');
 const COINS_CMD = process.env.COINS_CMD.split(',');
 
