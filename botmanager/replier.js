@@ -40,7 +40,7 @@ function buildMessage(iconName, text, attachs = null) {
         text: ''
     };
     if(attachs) {
-        attachs[0].title += ',  ' + text;
+        attachs[0].title += '\n' + text;
         msg.attachments = JSON.stringify(attachs);
     }
     else {

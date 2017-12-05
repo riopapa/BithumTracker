@@ -58,14 +58,14 @@ function showUsage() {
     logger.debug(header);
 }
 
+let showCoin = (match) => show.info(COINS_KEY[COINS_CMD.indexOf(match[1])], 'Current Values');
+
 let showActiveCoins = () => COINS_KEY.forEach(_ => show.info(_, 'Current Config'));
 
 let updateCoin = (match) => {
     updateConfig(match);
     showCoin(match);
 };
-
-let showCoin = (match) => show.info(COINS_KEY[COINS_CMD.indexOf(match[1])], 'Current Values');
 
 let adjustConfig = (match) => {
     const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];

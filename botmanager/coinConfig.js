@@ -7,7 +7,7 @@ module.exports = class coinConfig {
     constructor(coin = 'BTC') {
         try {
             this.title =  coin + '(' + COINS_CMD[COINS_KEY.indexOf(coin)] + ')'; // Big blue head
-            this.title_link = CHART_URL + coin + 'krw/3m'; // link when title was pressed
+            this.title_link = CHART_URL + coin + 'krw/3m';
             this.text = '';
             this.fields = [];
 
