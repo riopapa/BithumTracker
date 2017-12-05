@@ -11,7 +11,7 @@ services:
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/
-  image: devilica/coin_botmanager
+  image: riopapa/coin_botmanager
 
 # --------------------------------------------
  tracker_bch:
@@ -27,7 +27,7 @@ services:
    - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
-  image: devilica/coin_tracker
+  image: riopapa/coin_tracker
 
  tracker_btc:
   build:
@@ -42,7 +42,7 @@ services:
    - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
-  image: devilica/coin_tracker
+  image: riopapa/coin_tracker
 
  tracker_eth:
   build:
@@ -57,7 +57,7 @@ services:
    - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
-  image: devilica/coin_tracker
+  image: riopapa/coin_tracker
 
  tracker_btg:
   build:
@@ -72,5 +72,5 @@ services:
    - ./log/:/app/log/
    - ./config/:/app/config/
    - ./chartData/:/app/chartData/
-  image: devilica/coin_tracker
+  image: riopapa/coin_tracker
 
