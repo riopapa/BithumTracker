@@ -6,7 +6,6 @@ const TIMEZONE = 'Asia/Seoul';
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const LOG = process.env.LOG;
-const PRICE_ROUND_RADIX = Number(process.env.PRICE_ROUND_RADIX);
 
 const roundTo = require('round-to');
 const show = require('./showCoinValues.js');
@@ -240,7 +239,7 @@ function analyzeBoundary() {
         nowValues.tradeType = SELL;
         msg = 'Passing SELL boundary (' + sellBoundaryCount + ')';
         if (sellBoundaryCount++ > 4) {   // if goes over boundary several times, then adjust boundary temperary
-            config.sellPrice = roundTo(nowValues.close * (1 + config.gapAllowance),PRICE_ROUND_RADIX + 1);
+            config.sellPrice = roundTo(nowValues.close * (1 + config.gapAllowance),config.priceRadix + 1);
             sellBoundaryCount = 0;
             msg += '\nSELL PRICE adjusted temperary';
         }
@@ -249,7 +248,7 @@ function analyzeBoundary() {
         nowValues.tradeType = BUY;
         msg = 'Passing BUY boundary (' + buyBoundaryCount + ')';
         if (buyBoundaryCount++ > 4) {
-            config.buyPrice = roundTo(nowValues.close * (1 - config.gapAllowance),PRICE_ROUND_RADIX + 1);
+            config.buyPrice = roundTo(nowValues.close * (1 - config.gapAllowance),config.priceRadix + 1);
             buyBoundaryCount = 0;
             msg += '\nBUY PRICE adjusted temperary';
         }

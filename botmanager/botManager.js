@@ -94,10 +94,10 @@ let updateConfig = (match) => {
     const cf = JSON.parse(fs.readFileSync(configFile));
     switch (c.command) {
     case 's':   // sellPrice
-        cf.sellPrice = updatePrice(c.sign, c.amount, cf.sellPrice, c.percentKilo);
+        cf.sellPrice = updatePrice(cf.priceRadix, c.sign, c.amount, cf.sellPrice, c.percentKilo);
         break;
     case 'b':   // buyPrice
-        cf.buyPrice = updatePrice(c.sign, c.amount, cf.buyPrice, c.percentKilo);
+        cf.buyPrice = updatePrice(cf.priceRadix,c.sign, c.amount, cf.buyPrice, c.percentKilo);
         break;
     case 'g':   // gapAllowance
         cf.gapAllowance = roundTo(c.amount / 100, 5);
@@ -175,7 +175,7 @@ bot.on('message', function(data) {
     }
 });
 
-function updatePrice (sign, amount, price, percentKilo) {
+function updatePrice (cfRadix, sign, amount, price, percentKilo) {
     switch (sign + percentKilo) {    // sign : [+|-|], pK : [k|%|]
     case '+':
         price += amount;
@@ -204,7 +204,7 @@ function updatePrice (sign, amount, price, percentKilo) {
     default:
         price = amount;
     }
-    return roundTo(price,0);
+    return roundTo(price,cfRadix);
 }
 
 function adjustSellBuy(cointype, value) {

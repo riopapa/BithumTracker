@@ -41,7 +41,6 @@ function buildAttach(coin, value) {
     try {
         const cf = JSON.parse(fs.readFileSync(CONFIG + coin.toLowerCase() + '/' + CONFIG_FILENAME));
         const result = value.body.result;
-        logger.debug(result);
         const price = Number(result.price.last);
         const high = Number(result.price.high);
         const low = Number(result.price.low);
