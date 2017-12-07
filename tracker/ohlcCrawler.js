@@ -47,54 +47,61 @@ let ohlcCrawler = () => {
     Promise.try(() => bhttp.get(CRYPTOWATCH_URL))
         // .then(response => response)
         .then(response => {
-            // [ 0: CloseTime, 1: OpenPrice, 2:HighPrice, 3:LowPrice, 4:ClosePrice, 5:Volume ]
-            let epochs = [];
-            let highs = [];
-            let lows = [];
-            let closes = [];
-            let volumes = [];
-
-            let result = response.body.result;
-            let temp = result['180'];
-            let zerostr = '';
-            let arrIndex  = 0;
-            temp.map((e,i) => { // extrace about 200 from 500 arrays
-                if (e[2] && e[3] && e[4]) {
-                    if (i % 4 === 0 || i > 400) {
-                        epochs[arrIndex] = e[0];
-                        highs[arrIndex] = e[2];
-                        lows[arrIndex] = e[3];
-                        closes[arrIndex] = e[4];
-                        volumes[arrIndex] = roundTo(e[5],1);
-                        arrIndex++;
-                    }
-                }
-                else {
-                    if (zerostr) {
-                        zerostr += ',';
-                    }
-                    zerostr += '[' + [ i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1)].join(', ') + '] ';
-                }
-            });
-            if (zerostr) {
-                logger.debug('only [' + arrIndex + '] arrays');
-                stream.write(dateText(temp[temp.length - 1][0]) +', {' + zerostr + ' }' + EOL);
-            }
-            if (lastepoch === epochs[epochs.length -1]) {
-                logger.error('duplicate '+ dateText(lastepoch));
-            }
-            lastepoch = epochs[epochs.length -1];
+            const result = response.body.result;
+            const cwArray = result['180'];
+            const ohlcs = ohlcBuild (cwArray);
             const cost = Number(response.body.allowance.cost);
             const remain = Number(response.body.allowance.remaining);
             const remainPercent = remain / (cost + remain);
             if ( remainPercent < 0.01) {
                 logger.error('allowance  remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
             }
-            emitter.emit('event', {epochs, highs, lows, closes, volumes});
+           emitter.emit('event', ohlcs);
         }).catch((e) => {
         logger.error(e);
     });
 };
+
+function ohlcBuild (cwArray) {
+    // [ 0: CloseTime, 1: OpenPrice, 2:HighPrice, 3:LowPrice, 4:ClosePrice, 5:Volume ]
+    let epochs = [];
+    let highs = [];
+    let lows = [];
+    let closes = [];
+    let volumes = [];
+    let zerostr = '';
+    let arrIndex  = 0;
+    cwArray.filter((e, i) => {
+        if (i % 4 === 0 || i > 400) {
+            return e;
+        }
+    }).filter((e, i) => {
+        if (e[2] && e[3] && e[4]) {
+            return e;
+        }
+        else {
+            zerostr += (zerostr) ? ',' : '';
+            zerostr += '[' + [i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1)].join(', ') + '] ';
+        }
+    }).forEach((e) => { // extrace about 200 from 500 arrays
+        epochs[arrIndex] = e[0];
+        highs[arrIndex] = e[2];
+        lows[arrIndex] = e[3];
+        closes[arrIndex] = e[4];
+        volumes[arrIndex] = roundTo(e[5], 1);
+        arrIndex++;
+    });
+
+    if (zerostr) {
+        logger.debug('only [' + arrIndex + '] arrays');
+        stream.write(dateText(cwArray[cwArray.length - 1][0]) +', {' + zerostr + ' }' + EOL);
+    }
+    if (lastepoch === epochs[epochs.length -1]) {
+        logger.error('duplicate '+ dateText(lastepoch));
+    }
+    lastepoch = epochs[epochs.length -1];
+    return {epochs, highs, lows, closes, volumes};
+}
 
 ohlcCrawler();
 new CronJob(CRON_SCHEDULE, ohlcCrawler, null, true, TIMEZONE);

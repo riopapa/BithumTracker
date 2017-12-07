@@ -65,7 +65,7 @@ function buildAttach(coin, value) {
         }
         let coinConf = new coinConfig(coin)
             .addField('Buy:     ' + npercent((price - cf.buyPrice ) / price), npadBlank(cf.buyPrice))
-            .addField('Low : ' + npad(low, 'High: ' + npad(high)))
+            .addField('Low : ' + npad(low), 'High: ' + npad(high))
             .addField('Sell:     ' + npercent((cf.sellPrice - price) / price),  npadBlank(cf.sellPrice))
             .addField('24hr Change ', npercent(changePercent))
             .addField('gapAllowance ', npercent(cf.gapAllowance))

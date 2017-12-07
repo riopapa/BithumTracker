@@ -21,8 +21,10 @@ function buildAttach(nv, cf) {
             prev += momenttimezone(new Date(nv.pEpoch[i] * 1000)).tz(TIMEZONE).format('HH:mm');
             prev += npad(nv.pClose[i]) + ' (' + npercent((nv.close - nv.pClose[i]) / nv.pClose[i]) + ')  ' + nv.pVolume[i] + '\n';
         }
-        const delta = (nv.periodMax - nv.periodMin) / 30;
-        prev += '|' + pad((nv.close - nv.periodMin) / delta,'*', '-') + pad((nv.periodMax - nv.close) / delta, '|','-');
+        const delta = (nv.periodMax - nv.periodMin) / 20;
+        prev += 'm(' + npercent((nv.close - nv.periodMin ) / nv.periodMin) + ')|' +
+            pad((nv.close - nv.periodMin) / delta,'v', '-') + pad((nv.periodMax - nv.close) / delta, '|','-') +
+            'x(' + npercent((nv.close - nv.periodMax ) / nv.periodMax) + ')';
 
         return new coinConfig(CURRENCY)
 
@@ -36,10 +38,6 @@ function buildAttach(nv, cf) {
             .addField('Volume (avr/last)', numeral(nv.volume).format('0,0.0')  +
                 '  (' + numeral(nv.volumeLast / nv.volumeAvr * 100).format('0,0') + '%)\n'  +
                 numeral(nv.volumeAvr).format('0,0.0') + ' / ' + numeral(nv.volumeLast).format('0,0.0'))
-
-            .addField('vs Min: ' + npercent((nv.close - nv.periodMin ) / nv.periodMin), npadBlank(nv.periodMin) )
-            .addField('vs Max: ' + npercent((nv.close - nv.periodMax ) / nv.periodMax), npadBlank(nv.periodMax) )
-
         ;
     } catch (e) {
         throw new Error(e);

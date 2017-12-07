@@ -50,7 +50,7 @@ function showUsage() {
     const header =  'Monitor CrytoCoins [' + process.env.COINS_KEY + ']';
     const usage = '*USAGE*\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
-        '      {' + coins_cmd + 'n}  {bsagn}  {(+-)123(k%)}\n' +
+        '      {' + coins_cmd + 'n}  {bsagn*}  {(+-)123(k%)}\n' +
         '_Refer github_ README.md _for more detail_\nhttps://goo.gl/MQqVYV'; // https://github.com/riopapa/BithumTracker#usage';
 
     replier.sendSlack(usage, header, 'https://goo.gl/MQqVYV');
@@ -62,8 +62,17 @@ let showCoin = (match) => show.info(COINS_KEY[COINS_CMD.indexOf(match[1])], 'Cur
 let showActiveCoins = () => COINS_KEY.forEach(_ => show.info(_, 'Current Config'));
 
 let updateCoin = (match) => {
-    updateConfig(match);
-    showCoin(match);
+    if (match[1] === '*') {
+        COINS_CMD.forEach((c) => {
+            match[1] = c;
+            updateConfig(match);
+            showCoin(match);
+        });
+    }
+    else {
+        updateConfig(match);
+        showCoin(match);
+    }
 };
 
 let changeUpDownPercent = (match) => {
@@ -138,6 +147,9 @@ let invalidHandler = () => {
 let coinTypeValidator = (match) => {
     let valid = COINS_KEY[COINS_CMD.indexOf(match[1])];
     if (!valid) {
+        if (match[1] === '*') {
+            return true;
+        }
         sayInvalidCoin();
     }
 
@@ -147,12 +159,11 @@ let coinTypeValidator = (match) => {
 const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*$/, showUsage)
     .addCommand(/^sb\s*[nN]$/, showActiveCoins)
-    .addCommand(/^sb\s*([a-z|A-Z])[nN]$/, showCoin, coinTypeValidator)
-    .addCommand(/^sb\s*([a-z|A-Z])[aA]$/, adjustConfig, coinTypeValidator)
-    .addCommand(/^sb\s*([a-z|A-Z])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
-    .addCommand(/^sb\s*([a-z|A-Z])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, changeUpDownPercent, coinTypeValidator)
+    .addCommand(/^sb\s*([a-zA-Z])[nN]$/, showCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([a-zA-Z])[aA]$/, adjustConfig, coinTypeValidator)
+    .addCommand(/^sb\s*([a-zA-Z*])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(.\d+))([k%]?)$/, updateCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([a-zA-Z])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, changeUpDownPercent, coinTypeValidator)
     .addInvalidHandler(invalidHandler);
-
 
 // create a bot
 const settings = {

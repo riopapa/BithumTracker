@@ -4,7 +4,7 @@
 - This workspace is to find out right trading time for cryptocurrency
 - cryptocurrency price source is [bithumb](https://www.bithumb.com)
 - two modules are running
-  - tracker (ohlcBuilder > analyzer)
+  - tracker (ohlcBuilder is loaded then analyzer is emitted)
   - botManager (to change configuration via slack)
 
 ## Table of Contents
@@ -13,7 +13,7 @@
   - [Tracker start/stop](#tracker-operation)
   - [botManager start/stop](#botmanager-operation)
 
-- [Analyzing and Managing Files](#Analyzing-and-managing-files)
+- [Analyzing and Managing source](#analyzing-and-managing-files)
 - [Configuration Files](#configuration-and-environment-files)
 - [Usage at Slack](#usage)
 
@@ -24,7 +24,7 @@
 
 ### start
 ```
-cd ~/workspace
+cd ~/workspace/tracker
 node tracker.js &
 ```
 ### stop
@@ -42,7 +42,7 @@ kill -9 9340
 
 ### start
 ```
-cd ~/workspace
+cd ~/workspace/botmanager
 node botManager.js &
 ```
 ### stop
@@ -143,18 +143,18 @@ USERS=johndoe,onlybyme
 CONFIG=./config/                        // configuration folder which has each coin folder
 CONFIG_FILENAME=trackerConfig.json      // dynamic tracker monitoring variables 
 
-LOG=./log/
-LOGGER_CONFIGFILE=loggerConfig.json
-LOGGER_OUTFILE=history.log
-TREND_FILENAME=trend.log
+LOG=./log/                              // during execution all the log will be in this folder
+LOGGER_CONFIGFILE=loggerConfig.json     // loging option file
+LOGGER_OUTFILE=history.log              // log file name is like this ./log/btc/history.log
+TREND_FILENAME=trend.log                // comma seperated transaction log
 
 CHANNEL=#cointracker
 ICON_URL=http://localhost/
 WEB_TOKEN=xoxp-14663517xxxx-{web_token}
 
-COINS_NAME=Bitcoin CASH,Bitcoin,Ethereum,Bitcoin Gold
-COINS_KEY=BCH,BTC,ETH,BTG
-COINS_CMD=c,b,e,g
+COINS_NAME=Bitcoin CASH,Bitcoin,Ethereum,Bitcoin Gold   // currency names comma seperated
+COINS_KEY=BCH,BTC,ETH,BTG                               // should be match with currency code at bithumb
+COINS_CMD=c,b,e,g                                       // mnemonic one charactor assigned to currency (uppercase allowed
 ```
 
 ## Directory ./config
@@ -162,7 +162,6 @@ COINS_CMD=c,b,e,g
 ### loggerConfig.json
 
 - set log target to which file
-
   - note) appenders.file.filename will be modified in each js
 
 ```
@@ -231,6 +230,7 @@ NPAD_SIZE=10                    // space padding size after number conversion wi
 
 -   *b*:BTC, *x*:XRP, *e*:ETH, *c*:BCH, *g*BTG, .. (as you defiend)
 -   *n*:Now
+-   *\**: ALL
    
 ### _{subcommand}_
 
