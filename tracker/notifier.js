@@ -7,11 +7,12 @@ const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 const WEB_HOOK = process.env.WEB_HOOK;
 const ICON_URL = process.env.ICON_URL + CURRENCY + '.png';
+
+const COINS_NAME = process.env.COINS_NAME.split(',');
 const COINS_KEY = process.env.COINS_KEY.split(',');
 const COINS_CMD = process.env.COINS_CMD.split(',');
 
 const CHART_URL = 'https://cryptowat.ch/bithumb/' + currency + 'krw/3m';
-const TRACKER_NAME = process.env.TRACKER_NAME;
 
 let log4js = require('log4js');
 const logger = log4js.getLogger('notifier:' + currency);
@@ -25,7 +26,7 @@ exports.attach = (line, title) => sendToSlack(line, title, false);
 
 const slackPost = require('slackpost');
 let post = slackPost.post(WEB_HOOK);
-post.setUsername(TRACKER_NAME + ' : ' + CURRENCY + ' (' +  COINS_CMD[COINS_KEY.indexOf(CURRENCY)] + ')').enableFieldMarkdown();
+post.setUsername(COINS_NAME[COINS_KEY.indexOf(iconName)] + ' (' + iconName + ')').enableFieldMarkdown();
 const EOL = require('os').EOL;
 
 let msgLine = (line) => '```{0}```'.format(line);

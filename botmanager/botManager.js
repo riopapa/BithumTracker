@@ -23,6 +23,7 @@ const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 const CONFIG_FILENAME = process.env.CONFIG_FILENAME;
 
 const json = require('json-file');
+
 let log4js = require('log4js');
 const LOG = process.env.LOG;
 const LOGGER_CONFIGFILE = process.env.LOGGER_CONFIGFILE;
@@ -43,18 +44,16 @@ const coins_cmd = COINS_CMD.reduce((c1, c2) => c1 + c2);
 
 const CHANNEL = process.env.CHANNEL;
 const USERS = process.env.USERS.split(',');
-
-const BOT_NAME = process.env.BOT_NAME;
 const BOT_TOKEN = process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
 
 function showUsage() {
     const header =  'Monitor CrytoCoins [' + process.env.COINS_KEY + ']';
-    const usage = '*USAGE*             _(Ver. 2017-12-05)_\n' +
+    const usage = '*USAGE*\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
-        '      {' + coins_cmd + 'n}  {bsaghn}  {(+-)123(k%)}\n' +
-        '_Refer github_ README.md _for more detail_\nhttps://goo.gl/vKF1vk'; // https://github.com/kykim79/BitcoinTracker#usage';
+        '      {' + coins_cmd + 'n}  {bsagn}  {(+-)123(k%)}\n' +
+        '_Refer github_ README.md _for more detail_\nhttps://goo.gl/MQqVYV'; // https://github.com/riopapa/BithumTracker#usage';
 
-    replier.sendSlack(usage, header, 'https://github.com/kykim79/BitcoinTracker');
+    replier.sendSlack(usage, header, 'https://goo.gl/MQqVYV');
     logger.debug(header);
 }
 
@@ -64,6 +63,11 @@ let showActiveCoins = () => COINS_KEY.forEach(_ => show.info(_, 'Current Config'
 
 let updateCoin = (match) => {
     updateConfig(match);
+    showCoin(match);
+};
+
+let changeUpDownPercent = (match) => {
+    changeUpDown(match);
     showCoin(match);
 };
 
@@ -110,6 +114,23 @@ let updateConfig = (match) => {
     logger.debug('Update configration completed..');
 };
 
+
+/**
+ * changeUpDown : change rapid price up down alert rate
+ * @param match : match : [c(command) {cointype(BTC), command('b','s'), sign(+/-), amount(1234)]
+ * @returns none
+ */
+let changeUpDown = (match) => {
+    const coin = COINS_KEY[COINS_CMD.indexOf(match[1])];
+    const amount = Number(match[4])
+
+    const configFile = CONFIG + coin.toLowerCase() + '/' + CONFIG_FILENAME;
+    const cf = JSON.parse(fs.readFileSync(configFile));
+    cf.updown = roundTo(amount / 100, 5);
+    fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
+    logger.debug('Changing up/down completed..');
+};
+
 let invalidHandler = () => {
     replier.sendText('Command syntax error. Enter sb for help');
 };
@@ -129,13 +150,14 @@ const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*([a-z|A-Z])[nN]$/, showCoin, coinTypeValidator)
     .addCommand(/^sb\s*([a-z|A-Z])[aA]$/, adjustConfig, coinTypeValidator)
     .addCommand(/^sb\s*([a-z|A-Z])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([a-z|A-Z])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, changeUpDownPercent, coinTypeValidator)
     .addInvalidHandler(invalidHandler);
 
 
 // create a bot
 const settings = {
     token: BOT_TOKEN,
-    name: BOT_NAME
+    name: 'botManager'
 };
 
 const bot = new Bot(settings);

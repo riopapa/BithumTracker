@@ -10,7 +10,8 @@ const ICON_URL = process.env.ICON_URL;
 const CHANNEL = process.env.CHANNEL;
 const WEB_HOOK = process.env.WEB_HOOK;
 const BOT_ICON = process.env.BOT_ICON;
-const BOT_NAME = process.env.BOT_NAME;
+const COINS_NAME = process.env.COINS_NAME.split(',');
+const COINS_KEY = process.env.COINS_KEY.split(',');
 
 // LOGGER
 let log4js = require('log4js');
@@ -31,11 +32,15 @@ function sendWithAttach(iconName, text, attachs) {
 }
 
 function buildMessage(iconName, text, attachs = null) {
+    let usrname = COINS_NAME[COINS_KEY.indexOf(iconName)] + ' (' + iconName + ')';
+    if (iconName === BOT_ICON) {
+        usrname = 'botmanager';
+    }
     const msg = {
         token: WEB_TOKEN,
         channel: CHANNEL,
         as_user: false,
-        username: BOT_NAME + iconName,
+        username: usrname,
         icon_url: ICON_URL + iconName + '.png',
         text: ''
     };
@@ -54,7 +59,7 @@ function sendMarkDownedText(line, title, url) {
 
         let post = slackPost.post(WEB_HOOK);
         post
-            .setUsername(BOT_NAME)
+            .setUsername('botmanager')
             .enableFieldMarkdown()
             .setColor(slackPost.COLOR_LIST['GOOD'])
             .setTitle(title, url)

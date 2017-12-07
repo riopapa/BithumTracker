@@ -2,6 +2,8 @@ const format = require('string-format');
 format.extend(String.prototype);
 const momenttimezone = require('moment-timezone');
 const TIMEZONE = 'Asia/Seoul';
+const numeral = require('numeral');
+const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
 
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
@@ -27,7 +29,6 @@ let readConfigFile = (path) => new json.read(path);
 
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 const CONFIG_FILE = CONFIG + currency + '/' + process.env.CONFIG_FILENAME;
-const UPDOWN_PERCENT = Number(process.env.UPDOWN_PERCENT) / 100;
 
 // LOGGER
 let log4js = require('log4js');
@@ -51,8 +52,10 @@ watcher.on('change', (info) => {
 
 });
 
-const volumeCOUNT = 3;   // if recent volume goes high then...
-
+const volumeCOUNT = 4;   // if recent volume goes high then...
+const volumeCOUNTMAX = volumeCOUNT * 8;
+const slopeCOUNT = 4;   // if price varying slope is high then...
+const slopeCOUNTMAX = slopeCOUNT * 8;
 const ohlcCrawler = require('./ohlcCrawler.js');
 ohlcCrawler.getEmitter().on('event', listener);
 
@@ -73,13 +76,16 @@ const BUY = 'B';
 
 function listener({epochs, highs, lows, closes, volumes}) {
 
-    let tableLen = epochs.length;
-    logger.debug('epochs length ' + tableLen);
+    let tableLen = highs.length;
 
     let macds = calculateMACD(closes);
     let stochastic = calculateStochastic(highs, lows, closes);
 
     let tableSize = macds.length;
+
+    let temp = closes.slice(closes.length - slopeCOUNTMAX - 3);
+    let slopes = temp.map((c, i) => { return (temp[i-1] - c) / c});
+    let slopeSigns = temp.map((c, i) => { return (temp[i-1] < c) ? 1 : -1});
 
     nowValues.epoch = epochs[tableLen - 1] * 1000;
     nowValues.close = closes[tableLen - 1];
@@ -99,8 +105,12 @@ function listener({epochs, highs, lows, closes, volumes}) {
     nowValues.dLast = (stochastic[stochastic.length - 2].d) ? roundTo(stochastic[stochastic.length - 2].d, 0): 0;
     nowValues.kLast = (stochastic[stochastic.length - 2].k) ? roundTo(stochastic[stochastic.length - 2].k, 0): 0;
 
-    nowValues.volumeAvr = roundTo(volumes.slice(volumes.length - volumeCOUNT * 8).reduce((e1, e2) => e1 + e2) / (volumeCOUNT * 8),1);
-    nowValues.volumeLast = roundTo(volumes.slice(volumes.length - volumeCOUNT).reduce((e1, e2) => e1 + e2) / volumeCOUNT,1);
+    nowValues.volumeAvr = roundTo(volumes.slice(volumes.length - volumeCOUNTMAX).reduce((e1, e2) => e1 + e2) / volumeCOUNTMAX, 1);
+    nowValues.volumeLast = roundTo(volumes.slice(volumes.length - volumeCOUNT).reduce((e1, e2) => e1 + e2) / volumeCOUNT, 1);
+
+    nowValues.slopeAvr = roundTo(slopes.slice(slopes.length - slopeCOUNTMAX).reduce((e1, e2) => Math.abs(e1) + Math.abs(e2)) / slopeCOUNTMAX,5);
+    nowValues.slopeLast = roundTo(slopes.slice(slopes.length - slopeCOUNT).reduce((e1, e2) => Math.abs(e1) + Math.abs(e2)) / slopeCOUNT,5);
+    nowValues.slopeSign = slopeSigns.reduce((e1, e2) => e1 + e2);
 
     nowValues.sellTarget = config.sellPrice * (1 - config.gapAllowance);
     nowValues.buyTarget = config.buyPrice * (1 + config.gapAllowance);
@@ -109,7 +119,7 @@ function listener({epochs, highs, lows, closes, volumes}) {
     nowValues.msgText = '';
 
     if (isFirstTime) {
-        nowValues.msgText = '\nJust Started, with size [' + tableSize + ']';
+        nowValues.msgText = '\nJust Started, with size [' + tableLen + ']';
         isFirstTime = false;
     }
 
@@ -117,6 +127,8 @@ function listener({epochs, highs, lows, closes, volumes}) {
     analyzeStochastic();
     analyzeBoundary();
     analyzeVolume();
+    analyzeSlope();
+
 
     if (nowValues.msgText) {
         informTrade();
@@ -234,39 +246,26 @@ function analyzeStochastic() {
 
 function analyzeBoundary() {
 
-    let msg = '';
     if (nowValues.close > config.sellPrice) {
         nowValues.tradeType = SELL;
-        msg = 'Passing SELL boundary (' + sellBoundaryCount + ')';
-        if (sellBoundaryCount++ > 4) {   // if goes over boundary several times, then adjust boundary temperary
+        let msg = 'Go over SELL boundary (' + sellBoundaryCount + ')';
+        if (sellBoundaryCount++ > 3) {   // if goes over boundary several times, then adjust boundary temperary
             config.sellPrice = roundTo(nowValues.close * (1 + config.gapAllowance),config.priceRadix + 1);
             sellBoundaryCount = 0;
             msg += '\nSELL PRICE adjusted temperary';
         }
+        appendMsg(msg);
     }
     else if (nowValues.close < config.buyPrice) {
         nowValues.tradeType = BUY;
-        msg = 'Passing BUY boundary (' + buyBoundaryCount + ')';
-        if (buyBoundaryCount++ > 4) {
-            config.buyPrice = roundTo(nowValues.close * (1 - config.gapAllowance),config.priceRadix + 1);
+        let msg = 'Go under BUY boundary (' + buyBoundaryCount + ')';
+        if (buyBoundaryCount++ > 3) {
+            config.buyPrice = roundTo(nowValues.close * (1 - config.gapAllowance), config.priceRadix + 1);
             buyBoundaryCount = 0;
             msg += '\nBUY PRICE adjusted temperary';
         }
-    }
-    if (msg) {
         appendMsg(msg);
-        msg = '';
     }
-
-    if (nowValues.close < nowValues.pClose[2] * (1 - UPDOWN_PERCENT)) {
-        nowValues.tradeType = SELL;
-        msg = 'Fast Price DOWN (' + roundTo((nowValues.close - nowValues.pClose[2]) / nowValues.close * 100,0) + '%)';
-    }
-    else if (nowValues.close > nowValues.pClose[2] * (1 + UPDOWN_PERCENT)) {
-        nowValues.tradeType = BUY;
-        msg = 'Fast Price UP (' + roundTo((nowValues.close - nowValues.pClose[2]) / nowValues.close * 100,0) + '%)';
-    }
-    appendMsg(msg);
 }
 
 /**
@@ -293,8 +292,31 @@ function analyzeVolume() {
         else {
             msg += 'BUY/SELL ?';
         }
+        appendMsg(msg);
     }
-    appendMsg(msg);
+}
+
+/**
+ * analyzeSlope : compare lastest price slope against slope average
+ *
+ *
+ * @return nv.msgText if any
+ */
+
+function analyzeSlope() {
+
+    if (nowValues.slopeLast > 0.003 && nowValues.slopeLast > nowValues.slopeAvr * 2) {
+        appendMsg('Rapid Slope Change (' +  npercent(nowValues.slopeLast) + ') [' + nowValues.slopeSign + ']');
+    }
+
+    if (nowValues.close < nowValues.pClose[2] * (1 - config.updown)) {
+        nowValues.tradeType = SELL;
+        appendMsg('Fast Price DOWN (' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
+    }
+    else if (nowValues.close > nowValues.pClose[2] * (1 + config.updown)) {
+        nowValues.tradeType = BUY;
+        appendMsg('Fast Price UP (' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
+    }
 }
 
 function appendMsg(msg) {
@@ -302,6 +324,7 @@ function appendMsg(msg) {
         nowValues.msgText += '\n' + msg;
     }
 }
+
 /**
  * informTrade : send message to slack via web-hook
  *

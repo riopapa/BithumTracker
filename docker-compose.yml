@@ -8,6 +8,7 @@ services:
    context: ./botmanager
   env_file:
    - ./botmanager.env
+   - ./tracker.env
   volumes:
    - ./log/:/app/log/
    - ./config/:/app/config/

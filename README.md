@@ -13,7 +13,7 @@
   - [Tracker start/stop](#tracker-operation)
   - [botManager start/stop](#botmanager-operation)
 
-- [Analyzing Files Explanation](#analyzing-files-explanation)
+- [Analyzing and Managing Files](#Analyzing-and-managing-files)
 - [Configuration Files](#configuration-and-environment-files)
 - [Usage at Slack](#usage)
 
@@ -53,10 +53,36 @@ ubuntu     10353    8121  0 13:39 pts/11   00:00:00 grep --color=auto tracker
 kill -9 9340
 ```
 
-## Analyzing Files Explanation
+# Analyzing and Managing Files
 
-### ohlcCrawler.js
-- read from cryto site and provide OHLC V arrays to analyzer.js
+## Directory ./botmanager
+
+### botManager.js
+
+- get user input to set trackerConfig.json
+- change will impact to analyzer.js
+
+### minor files refered by botManager.js
+
+#### coinConfig.js
+- class file to generate slack communication base
+
+#### commandHelper.js
+- validate user input and invoke relative modules
+
+#### getSlackName.js
+- get username and channel name when user key in something
+
+#### replier.js
+- send to slack buy,sell alert with attach format
+
+#### showStatus.js
+- generate current configruation values  and prices
+
+#### test.js
+- assert test for commandHelper.js
+ 
+## Directory ./tracker
 
 ### analyzer.js
 - calculate MACD, signal, histogram
@@ -64,25 +90,82 @@ kill -9 9340
 - analyze buy,sell time using caculated values
 - inform thru notifier.js when to buy,sell
 
-### notifier.js
-- send various message to slack bia webhook
+### ohlcCrawler.js
+- read from cryto site and provide Open, High, Low, Close, Volume arrays to analyzer.js
 
-### Minor Files
+### minor files refered in analyzer.js or ohlcCrawler.js
 
-#### coinInfo.js
-- create one by one transaction provided by crawler.js
+#### coinConfig.js
+- class file to generate slack communication base
+
+#### notifier.js
+- send to slack in various level
+- .info, .warn, .danger : send to slack in text format
+- .attach : send to slack in attach format
 
 #### notiType.js
 - notify type enum (info, warn, danger)
+
+### replier
+- send to slack buy,sell alert with attach format
+
+### showCoinValues.js
+- generate current statisistics and prices
 
 ----
 
 # Configuration and Environment Files
 
-## loggerConfig.json
+## Directory ./
+
+### botmanager.env
+
+- define slack communication informations
+- define users to handle this bot
+- sample: ./botmanager.env.example
+
+```
+BOT_ICON=TST
+BOT_TOKEN={BOT TOKEN}
+WEB_HOOK=https://hooks.slack.com/services/{your webook}
+USERS=johndoe,onlybyme
+
+```
+
+### tracker.env
+
+- define configuration, log path and file names
+- define slack communication information
+- define cryptocurrency table
+- sample: ./tracker.env.example
+
+```
+CONFIG=./config/                        // configuration folder which has each coin folder
+CONFIG_FILENAME=trackerConfig.json      // dynamic tracker monitoring variables 
+
+LOG=./log/
+LOGGER_CONFIGFILE=loggerConfig.json
+LOGGER_OUTFILE=history.log
+TREND_FILENAME=trend.log
+
+CHANNEL=#cointracker
+ICON_URL=http://localhost/
+WEB_TOKEN=xoxp-14663517xxxx-{web_token}
+
+COINS_NAME=Bitcoin CASH,Bitcoin,Ethereum,Bitcoin Gold
+COINS_KEY=BCH,BTC,ETH,BTG
+COINS_CMD=c,b,e,g
+```
+
+## Directory ./config
+
+### loggerConfig.json
 
 - set log target to which file
-```js
+
+  - note) appenders.file.filename will be modified in each js
+
+```
 {
   "replaceConsole": true,
   "appenders": {
@@ -108,16 +191,37 @@ kill -9 9340
 }
 ```
 
-## trackerConfig.json
-- configuration that is used in analyzer.js 
-```js
+## Directory ./config/coin
+
+- /coin foldername should be replaced with proper cryptocurrency code, e.g. btc
+
+### icon.png
+
+- small icon to display at slack message 
+
+### tracker.env
+
+- define slack webhook for this crypocurrency
+
+```
+WEB_HOOK=https://hooks.slack.com/services/{web_hook}
+CRON_SCHEDULE=2 */4 * * * *     // rerun at every 2 sec with 4 min interval 
+NPAD_SIZE=10                    // space padding size after number conversion with comma 
+```
+
+### trackerConfig.json
+
+- storage to keep runtime variables which may be modified by botmanager.js
+
+```
 {
-    "gapAllowance": 0.033,          //    gap allowance to check within target sell,buy price for warning
-    "buyPrice": 4350300,            //    Target buy Price
-    "sellPrice": 5074580,           //    Target sell Price
+  "gapAllowance": 0.033,    //  gap allowance to check within target sell,buy price for warning
+  "buyPrice": 4350300,      //  Target buy Price
+  "sellPrice": 5074580,     //  Target sell Price
+  "priceRadix": -1,         //  base radix for adjusting price
+  "updown": 0.02            //  alert if price goes up/down rapidly
 }
 ```
-----
 
 # Usage
 
@@ -130,9 +234,11 @@ kill -9 9340
    
 ### _{subcommand}_
 
--   *b*: buyPrice,           *s*: sellPrice
--   *g*: gapAllowance
+-   *b*: buyPrice,
+-   *s*: sellPrice
+-   *g*: gapAllowance %
 -   *a*: adjust buy,sell based on nowPrice +/- gapAllowance * 3 %
+-   *u*: rapid price up/down warning % 
 -   *n*: nowPrice
    
 ### _{amount}_

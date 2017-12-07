@@ -19,7 +19,7 @@ function buildAttach(nv, cf) {
         let prev = '';
         for (let i = 0; i < 5; i++) {
             prev += momenttimezone(new Date(nv.pEpoch[i] * 1000)).tz(TIMEZONE).format('HH:mm');
-            prev += npadBlank(nv.pClose[i]) + ' (' + npercent((nv.close - nv.pClose[i]) / nv.pClose[i]) + ')  ' + nv.pVolume[i] + '\n';
+            prev += npad(nv.pClose[i]) + ' (' + npercent((nv.close - nv.pClose[i]) / nv.pClose[i]) + ')  ' + nv.pVolume[i] + '\n';
         }
         const delta = (nv.periodMax - nv.periodMin) / 30;
         prev += '|' + pad((nv.close - nv.periodMin) / delta,'*', '-') + pad((nv.periodMax - nv.close) / delta, '|','-');

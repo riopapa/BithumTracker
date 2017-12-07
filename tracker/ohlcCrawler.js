@@ -1,19 +1,22 @@
 const roundTo = require('round-to');
-
+const momenttimezone = require('moment-timezone');
+const TIMEZONE = 'Asia/Seoul';
+const EOL = require('os').EOL;
 const format = require('string-format');
 format.extend(String.prototype);
-let CronJob = require('cron').CronJob;
 const json = require('json-file');
+const numeral = require('numeral');
+const pad = require('pad');
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE;
-const TIMEZONE = 'Asia/Seoul';
 
 const CURRENCY = process.env.CURRENCY;
 const currency = CURRENCY.toLowerCase();
 
 const Promise = require('bluebird');
 const bhttp = require('bhttp');
+let CronJob = require('cron').CronJob;
 
 let log4js = require('log4js');
 const LOG = process.env.LOG;
@@ -27,17 +30,14 @@ log4js_extend(log4js, {
     path: __dirname,
     format: '(@name:@line:@column)'
 });
-const logger = log4js.getLogger('ohlcbuilder:' + currency);
-
-let moment = require('moment');
-require('moment-timezone');
-let minuteString = (epoch) => moment(new Date(epoch)).tz('Asia/Seoul').format('YYYY-MM-DD HH:mm');
+const logger = log4js.getLogger('ohlccrawler:' + currency);
 
 const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/' + currency + 'krw/ohlc?periods=180';
 
 let rollers = require('streamroller');
-let stream = new rollers.RollingFileStream(LOG + currency + '/crawler.log', 5000000, 2);
-let streamRaw = new rollers.RollingFileStream(LOG  + currency + '/raw.log', 5000000, 2);
+let stream = new rollers.RollingFileStream(LOG + currency + '/ohlc_raw.log', 5000000, 2);
+const dateText = (epoch) => momenttimezone(epoch * 1000).tz(TIMEZONE).format('MM-DD HH:mm');
+let lastepoch = 0;
 
 const events = require('events');
 const emitter = new events.EventEmitter();
@@ -48,41 +48,53 @@ let ohlcCrawler = () => {
         // .then(response => response)
         .then(response => {
             // [ 0: CloseTime, 1: OpenPrice, 2:HighPrice, 3:LowPrice, 4:ClosePrice, 5:Volume ]
-            let result = response.body.result;
-            let rslt = result['180'];
             let epochs = [];
             let highs = [];
             let lows = [];
             let closes = [];
             let volumes = [];
-            rslt.map ((e,i) => { epochs[i] = e[0];
-                highs[i] = e[2];
-                lows[i] = e[3];
-                closes[i] = e[4];
-                volumes[i] = roundTo(e[5],1);}
-            );
 
+            let result = response.body.result;
+            let temp = result['180'];
+            let zerostr = '';
+            let arrIndex  = 0;
+            temp.map((e,i) => { // extrace about 200 from 500 arrays
+                if (e[2] && e[3] && e[4]) {
+                    if (i % 4 === 0 || i > 400) {
+                        epochs[arrIndex] = e[0];
+                        highs[arrIndex] = e[2];
+                        lows[arrIndex] = e[3];
+                        closes[arrIndex] = e[4];
+                        volumes[arrIndex] = roundTo(e[5],1);
+                        arrIndex++;
+                    }
+                }
+                else {
+                    if (zerostr) {
+                        zerostr += ',';
+                    }
+                    zerostr += '[' + [ i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1)].join(', ') + '] ';
+                }
+            });
+            if (zerostr) {
+                logger.debug('only [' + arrIndex + '] arrays');
+                stream.write(dateText(temp[temp.length - 1][0]) +', {' + zerostr + ' }' + EOL);
+            }
+            if (lastepoch === epochs[epochs.length -1]) {
+                logger.error('duplicate '+ dateText(lastepoch));
+            }
+            lastepoch = epochs[epochs.length -1];
+            const cost = Number(response.body.allowance.cost);
+            const remain = Number(response.body.allowance.remaining);
+            const remainPercent = remain / (cost + remain);
+            if ( remainPercent < 0.01) {
+                logger.error('allowance  remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
+            }
             emitter.emit('event', {epochs, highs, lows, closes, volumes});
         }).catch((e) => {
         logger.error(e);
     });
 };
-
-function makeOHLCfield(coins) {
-    const coinInfos = coins.map(_ => JSON.parse(_));
-    const coinInfo = coinInfos[coinInfos.length - 1];
-
-    const prices = coinInfos.map(_ => _.price);
-    const volumes = coinInfos.map(_ => _.volume);
-
-    coinInfo.date = minuteString(coinInfo.epoch);
-    coinInfo.high = Math.max(...prices);
-    coinInfo.low = Math.min(...prices);
-    coinInfo.close = prices[prices.length - 1];
-    coinInfo.open = prices[0];
-    coinInfo.volume = roundTo(volumes.reduce((e1, e2) => (e1 + e2)),1);
-    return coinInfo;
-}
 
 ohlcCrawler();
 new CronJob(CRON_SCHEDULE, ohlcCrawler, null, true, TIMEZONE);

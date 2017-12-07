@@ -46,7 +46,6 @@ function buildAttach(coin, value) {
         const low = Number(result.price.low);
         const changePercent = roundTo(Number(result.price.change.percentage),4);
         // const changePrice = Number(result.price.change.absolute);
-        const volume = roundTo(Number(result.volume),0);
         let trendShort = true;
         let trendLastTitle = '';
         let trendLastText = '';
@@ -65,12 +64,12 @@ function buildAttach(coin, value) {
             trendShort = false;
         }
         let coinConf = new coinConfig(coin)
-            .addField('Sell:     ' + npercent((cf.sellPrice - price) / price),  npadBlank(cf.sellPrice))
-            .addField('High: ' + npad(high), 'Low : ' + npad(low))
             .addField('Buy:     ' + npercent((price - cf.buyPrice ) / price), npadBlank(cf.buyPrice))
+            .addField('Low : ' + npad(low, 'High: ' + npad(high)))
+            .addField('Sell:     ' + npercent((cf.sellPrice - price) / price),  npadBlank(cf.sellPrice))
             .addField('24hr Change ', npercent(changePercent))
-            .addField('volume ', '        ' + npad(volume))
-            .addField('gapAllow ' + npercent(cf.gapAllowance), npadBlank(cf.gapAllowance * price))
+            .addField('gapAllowance ', npercent(cf.gapAllowance))
+            .addField('updown alert ', npercent(cf.updown))
             .addField(trendLastTitle,trendLastText, trendShort)
         ;
         coinConf.title += '   ' + npadBlank(price);

@@ -9,9 +9,8 @@ const currency = CURRENCY.toLowerCase();
 const WEB_TOKEN = process.env.WEB_TOKEN;
 const ICON_URL = process.env.ICON_URL;
 const CHANNEL = process.env.CHANNEL;
-// const WEB_HOOK = process.env.WEB_HOOK;
-// const BOT_ICON = process.env.BOT_ICON;
-const BOT_NAME = process.env.BOT_NAME;
+const COINS_NAME = process.env.COINS_NAME.split(',');
+const COINS_KEY = process.env.COINS_KEY.split(',');
 
 let log4js = require('log4js');
 const logger = log4js.getLogger('replier:' + currency);
@@ -19,11 +18,6 @@ const logger = log4js.getLogger('replier:' + currency);
 // exports.sendText = (text) => sendTextOnly(text);
 exports.sendAttach = (iconName, text, attachs) => sendWithAttach(iconName, text, attachs);
 // exports.sendSlack = (line, title, url) => sendMarkDownedText(line, title, url);
-
-// function sendTextOnly(text) {
-//     requestMessage(buildMessage(BOT_ICON, text));
-//     logger.debug(text);
-// }
 
 function sendWithAttach(iconName, text, attachs) {
     requestMessage(buildMessage(iconName, text, attachs));
@@ -35,7 +29,7 @@ function buildMessage(iconName, text, attachs = null) {
         token: WEB_TOKEN,
         channel: CHANNEL,
         as_user: false,
-        username: BOT_NAME + iconName,
+        username: COINS_NAME[COINS_KEY.indexOf(iconName)] + ' (' + iconName + ')',
         icon_url: ICON_URL + iconName + '.png',
         text: ''
     };

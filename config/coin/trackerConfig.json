@@ -2,5 +2,6 @@
   "gapAllowance" : 0.01,
   "buyPrice": 1230000,
   "sellPrice":1290000,
-  "priceRadix": -1
+  "priceRadix": -1,
+  "updown": 0.02
 }
