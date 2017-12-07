@@ -76,8 +76,17 @@ let updateCoin = (match) => {
 };
 
 let changeUpDownPercent = (match) => {
-    changeUpDown(match);
-    showCoin(match);
+    if (match[1] === '*') {
+        COINS_CMD.forEach((c) => {
+            match[1] = c;
+            changeUpDown(match);
+            showCoin(match);
+        });
+    }
+    else {
+        changeUpDown(match);
+        showCoin(match);
+    }
 };
 
 let adjustConfig = (match) => {
@@ -162,7 +171,7 @@ const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*([a-zA-Z])[nN]$/, showCoin, coinTypeValidator)
     .addCommand(/^sb\s*([a-zA-Z])[aA]$/, adjustConfig, coinTypeValidator)
     .addCommand(/^sb\s*([a-zA-Z*])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(.\d+))([k%]?)$/, updateCoin, coinTypeValidator)
-    .addCommand(/^sb\s*([a-zA-Z])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, changeUpDownPercent, coinTypeValidator)
+    .addCommand(/^sb\s*([a-zA-Z*])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(.\d+))([k%]?)$/, changeUpDownPercent, coinTypeValidator)
     .addInvalidHandler(invalidHandler);
 
 // create a bot
