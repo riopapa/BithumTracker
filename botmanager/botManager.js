@@ -62,31 +62,35 @@ let showCoin = (match) => show.info(COINS_KEY[COINS_CMD.indexOf(match[1])], 'Cur
 let showActiveCoins = () => COINS_KEY.forEach(_ => show.info(_, 'Current Config'));
 
 let updateCoin = (match) => {
-    if (match[1] === '*') {
-        COINS_CMD.forEach((c) => {
-            match[1] = c;
-            updateConfig(match);
-            showCoin(match);
-        });
-    }
-    else {
-        updateConfig(match);
-        showCoin(match);
-    }
+    updateConfig(match);
+    showCoin(match);
+};
+
+
+let updateAllCoins = (match) => {
+    COINS_CMD.forEach((c) => {
+        match[1] = c;
+        updateCoin(match);
+    });
 };
 
 let changeUpDownPercent = (match) => {
-    if (match[1] === '*') {
-        COINS_CMD.forEach((c) => {
-            match[1] = c;
-            changeUpDown(match);
-            showCoin(match);
-        });
-    }
-    else {
-        changeUpDown(match);
-        showCoin(match);
-    }
+    changeUpDown(match);
+    showCoin(match);
+};
+
+let changeAllUpDownPercents = (match) => {
+    COINS_CMD.forEach((c) => {
+        match[1] = c;
+        changeUpDownPercent(match);
+    });
+};
+
+let adjustAllConfigs = (match) => {
+    COINS_CMD.forEach((c) => {
+        match[1] = c;
+        adjustConfig(match);
+    });
 };
 
 let adjustConfig = (match) => {
@@ -111,6 +115,7 @@ let updateConfig = (match) => {
         amount: Number(match[4]),
         percentKilo: match[5]
     };
+    match.forEach((m, i) => { logger.debug(i + ') ' + m);});
 
     const configFile = CONFIG + c.coin.toLowerCase() + '/' + CONFIG_FILENAME;
     const cf = JSON.parse(fs.readFileSync(configFile));
@@ -156,9 +161,6 @@ let invalidHandler = () => {
 let coinTypeValidator = (match) => {
     let valid = COINS_KEY[COINS_CMD.indexOf(match[1])];
     if (!valid) {
-        if (match[1] === '*') {
-            return true;
-        }
         sayInvalidCoin();
     }
 
@@ -170,8 +172,11 @@ const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*[nN]$/, showActiveCoins)
     .addCommand(/^sb\s*([a-zA-Z])[nN]$/, showCoin, coinTypeValidator)
     .addCommand(/^sb\s*([a-zA-Z])[aA]$/, adjustConfig, coinTypeValidator)
-    .addCommand(/^sb\s*([a-zA-Z*])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(.\d+))([k%]?)$/, updateCoin, coinTypeValidator)
-    .addCommand(/^sb\s*([a-zA-Z*])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(.\d+))([k%]?)$/, changeUpDownPercent, coinTypeValidator)
+    .addCommand(/^sb\s*([*])[aA]$/, adjustAllConfigs)
+    .addCommand(/^sb\s*([a-zA-Z])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
+    .addCommand(/^sb\s*([*])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(?:.\d+))([k%]?)$/, updateAllCoins)
+    .addCommand(/^sb\s*([a-zA-Z])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:.\d+))([k%]?)$/, changeUpDownPercent, coinTypeValidator)
+    .addCommand(/^sb\s*([*])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:.\d+))([k%]?)$/, changeAllUpDownPercents)
     .addInvalidHandler(invalidHandler);
 
 // create a bot
@@ -218,6 +223,7 @@ bot.on('message', function(data) {
 });
 
 function updatePrice (cfRadix, sign, amount, price, percentKilo) {
+    logger.debug('cfRadix' + cfRadix);
     switch (sign + percentKilo) {    // sign : [+|-|], pK : [k|%|]
     case '+':
         price += amount;
@@ -254,8 +260,8 @@ function adjustSellBuy(cointype, value) {
         const configFile = CONFIG + cointype.toLowerCase() + '/' + CONFIG_FILENAME;
         const cf = JSON.parse(fs.readFileSync(configFile));
         const price = Number(value.body.result.price);
-        cf.buyPrice = roundTo(price * (1 - cf.gapAllowance * 3),0);
-        cf.sellPrice = roundTo(price * (1 + cf.gapAllowance * 3),0);
+        cf.buyPrice = roundTo(price * (1 - cf.gapAllowance * 3),cf.priceRadix);
+        cf.sellPrice = roundTo(price * (1 + cf.gapAllowance * 3),cf.priceRadix);
         fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
         // return show.attach(cointype, value);
     }

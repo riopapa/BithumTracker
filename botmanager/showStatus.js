@@ -53,8 +53,8 @@ function buildAttach(coin, value) {
         if(fs.existsSync(trendLog)) {
             const stats = fs.statSync(trendLog);
             if ((new Date() - stats.mtime) > 600000) {    // if last trend log is before 10 min, then
-                trendLastTitle = 'Tracker stopped ' + +roundTo((new Date() - stats.mtime) / 60000, 0) + ' min. ago';
-                trendLastText = 'Last trend log time is  ' + momenttimezone(new Date(stats.mtime)).tz('Asia/Seoul').format('YY-MM-DD HH:mm');
+                trendLastTitle = 'TRACKER STOPPED ' + +roundTo((new Date() - stats.mtime) / 60000, 0) + ' min. ago';
+                trendLastText = 'LAST TREND LOG TIME :  ' + momenttimezone(new Date(stats.mtime)).tz('Asia/Seoul').format('YY-MM-DD HH:mm');
                 trendShort = false;
             }
         }
