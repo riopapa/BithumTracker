@@ -1,4 +1,4 @@
-[![Waffle.io - Columns and their card count](https://badge.waffle.io/kykim79/BitcoinTracker.svg?columns=all)](http://waffle.io/kykim79/BitcoinTracker) [![Build Status](https://semaphoreci.com/api/v1/kykim79/bitcointracker/branches/master/shields_badge.svg)](https://semaphoreci.com/kykim79/bitcointracker)
+[![Waffle.io - Columns and their card count](https://badge.waffle.io/riopapa/BithumTracker.svg?columns=all)](https://waffle.io/riopapa/BithumTracker) [![Build Status](https://semaphoreci.com/api/v1/riopapa/bithumtracker/branches/master/shields_badge.svg)](https://semaphoreci.com/riopapa/bithumtracker)
 
 # About BitcoinTracker
 - This workspace is to find out right trading time for cryptocurrency
