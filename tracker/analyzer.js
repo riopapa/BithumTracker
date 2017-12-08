@@ -85,20 +85,20 @@ const BUY = 'B';
 
 function listener({epochs, highs, lows, closes, volumes}) {
 
-    let tableLen = highs.length;
+    const tableLen = highs.length;
 
     if (isCWDead(epochs[tableLen - 1])) {
         return;
     }
 
-    let macds = calculateMACD(closes);
-    let stochastic = calculateStochastic(highs, lows, closes);
+    const macds = calculateMACD(closes);
+    const stochastic = calculateStochastic(highs, lows, closes);
 
-    let tableSize = macds.length;
+    const tableSize = macds.length;
 
-    let temp = closes.slice(closes.length - slopeCOUNTMAX - 3);
-    let slopes = temp.map((c, i) => { return (temp[i-1] - c) / c});
-    let slopeSigns = temp.map((c, i) => { return (temp[i-1] < c) ? 1 : -1});
+    const temp = closes.slice(closes.length - slopeCOUNTMAX - 3);
+    const slopes = temp.map((c, i) => { return (temp[i-1] - c) / c});
+    const slopeSigns = temp.map((c, i) => { return (temp[i-1] < c) ? 1 : -1});
 
     nowValues.epoch = epochs[tableLen - 1] * 1000;
     nowValues.close = closes[tableLen - 1];
@@ -158,7 +158,7 @@ function listener({epochs, highs, lows, closes, volumes}) {
 
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
-        let msg = 'same data since ' + dateText(lastepoch) + ' [' + ++lastsame + ']';
+        const msg = 'same data since ' + dateText(lastepoch) + ' [' + ++lastsame + ']';
         if (lastsame > 10) {    // 180 sec * 10 = 30 minutes ?
             notifier.danger(msg, COINS_NAME[COINS_KEY.indexOf(CURRENCY)] + ' (' + CURRENCY + ') IS INACTIVE');
             lastsame = 0;
@@ -233,8 +233,8 @@ function calculateStochastic(highs, lows, closes) {
 function analyzeHistogram() {
 
     if (nowValues.histoSign) {
-        let sellHisto = config.sellPrice * (1 - config.gapAllowance / 2);
-        let buyHisto = config.buyPrice * (1 + config.gapAllowance / 2);
+        const sellHisto = config.sellPrice * (1 - config.gapAllowance / 2);
+        const buyHisto = config.buyPrice * (1 + config.gapAllowance / 2);
 
         let msg = '';
         if (nowValues.close > sellHisto) {
@@ -368,7 +368,7 @@ function appendMsg(msg) {
 
 function informTrade() {
 
-    let attach = show.attach(nowValues,config);
+    const attach = show.attach(nowValues,config);
     attach.title += '   ' + momenttimezone(new Date(nowValues.epoch)).tz(TIMEZONE).format('MM-DD HH:mm'),
         replier.sendAttach(CURRENCY, nowValues.msgText, [attach]);
 
@@ -385,7 +385,7 @@ function keepLog() {
 
     try {
 
-        let str = [
+        const str = [
             CURRENCY,
             momenttimezone(new Date(nowValues.epoch)).tz(TIMEZONE).format('YY-MM-DD HH:mm'),
             nowValues.close,
@@ -405,7 +405,7 @@ function keepLog() {
     }
 
     // sometimes write value header
-    let d = new Date(nowValues.epoch);
+    const d = new Date(nowValues.epoch);
     if (d.getMinutes() > 55 && (d.getHours() % 3 === 1)) {
         const head = 'coin, date and time  ,   close,  vol, volAvr, volLast, histo, Sign, dNow, kNow, B/S, msgText';
         stream.write(head + EOL);
