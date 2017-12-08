@@ -26,7 +26,7 @@ exports.attach = (line, title) => sendToSlack(line, title, false);
 
 const slackPost = require('slackpost');
 let post = slackPost.post(WEB_HOOK);
-post.setUsername(COINS_NAME[COINS_KEY.indexOf(iconName)] + ' (' + iconName + ')').enableFieldMarkdown();
+post.setUsername(COINS_NAME[COINS_KEY.indexOf(CURRENCY)] + ' (' + CURRENCY + ')').enableFieldMarkdown();
 const EOL = require('os').EOL;
 
 let msgLine = (line) => '```{0}```'.format(line);

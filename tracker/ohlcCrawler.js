@@ -56,13 +56,7 @@ let ohlcCrawler = () => {
             if ( remainPercent < 0.01) {
                 logger.error('allowance  remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
             }
-            let checkepoch = new Date();
-            if (checkepoch / 1000 - lastepoch < 1200) {
-                emitter.emit('event', ohlcs);
-            }
-            else {
-                logger.error('no data provided since ' + dateText(lastepoch));
-            }
+            emitter.emit('event', ohlcs);
         }).catch((e) => {
         logger.error(e);
     });
@@ -102,7 +96,6 @@ function ohlcBuild (cwArray) {
         logger.debug('execluding zero, [' + arrIndex + '] arrays');
         stream.write(dateText(cwArray[cwArray.length - 1][0]) +', {' + zerostr + ' }' + EOL);
     }
-    lastepoch = epochs[epochs.length -1];
     return {epochs, highs, lows, closes, volumes};
 }
 

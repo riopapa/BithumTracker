@@ -1,17 +1,24 @@
+const CURRENCY = process.env.CURRENCY;
+const currency = CURRENCY.toLowerCase();
+
+const LOG = process.env.LOG;
 const format = require('string-format');
 format.extend(String.prototype);
+
 const momenttimezone = require('moment-timezone');
 const TIMEZONE = 'Asia/Seoul';
+const dateText = (epoch) => momenttimezone(epoch * 1000).tz(TIMEZONE).format('MM-DD HH:mm');
+
 const numeral = require('numeral');
 const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
 
-const CURRENCY = process.env.CURRENCY;
-const currency = CURRENCY.toLowerCase();
-const LOG = process.env.LOG;
+const COINS_NAME = process.env.COINS_NAME.split(',');
+const COINS_KEY = process.env.COINS_KEY.split(',');
 
 const roundTo = require('round-to');
 const show = require('./showCoinValues.js');
 const replier = require('./replier.js');
+const notifier = require('./notifier.js');
 
 const MACD = require('technicalindicators').MACD;
 const Stochastic = require('technicalindicators').Stochastic;
@@ -37,6 +44,8 @@ const logger = log4js.getLogger('analyzer:' + currency);
 const EOL = require('os').EOL;
 const replaceall = require('replaceall');
 let isFirstTime = true; // inform current setting when this module is started
+let lastepoch = 0;
+let lastsame = 0;
 
 let config = readConfigFile(CONFIG_FILE).data;
 let sellBoundaryCount = 0;
@@ -77,6 +86,10 @@ const BUY = 'B';
 function listener({epochs, highs, lows, closes, volumes}) {
 
     let tableLen = highs.length;
+
+    if (isCWDead(epochs[tableLen - 1])) {
+        return;
+    }
 
     let macds = calculateMACD(closes);
     let stochastic = calculateStochastic(highs, lows, closes);
@@ -134,6 +147,27 @@ function listener({epochs, highs, lows, closes, volumes}) {
         informTrade();
     }
     keepLog();
+}
+
+/**
+ * isCWDead : verify whether given array values are same with previous
+ *
+ * @param epoch : last time in epochs[]
+ * @returns {boolean}
+ */
+
+function isCWDead(epoch) {
+    if (epoch === lastepoch) {
+        let msg = 'same data since ' + dateText(lastepoch) + ' [' + ++lastsame + ']';
+        if (lastsame > 20) {    // 180 sec * 20 = 1 hour?
+            logger.warn(msg);   // note) it may not be same data in a row
+            return true;
+        }
+        notifier.danger(msg, COINS_NAME[COINS_KEY.indexOf(CURRENCY)] + ' (' + CURRENCY + ') IS INACTIVE');
+        lastsame = 0;
+    }
+    lastepoch = epoch;
+    return false;
 }
 
 /**
