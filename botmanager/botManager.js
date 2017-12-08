@@ -143,7 +143,7 @@ let updateConfig = (match) => {
  */
 let changeUpDown = (match) => {
     const coin = COINS_KEY[COINS_CMD.indexOf(match[1])];
-    const amount = Number(match[4])
+    const amount = Number(match[4]);
 
     const configFile = CONFIG + coin.toLowerCase() + '/' + CONFIG_FILENAME;
     const cf = JSON.parse(fs.readFileSync(configFile));
@@ -173,8 +173,8 @@ const commandHelper = new CommandHelper()
     .addCommand(/^sb\s*([*])[aA]$/, adjustAllConfigs)
     .addCommand(/^sb\s*([a-zA-Z])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateCoin, coinTypeValidator)
     .addCommand(/^sb\s*([*])\s*([bsgBSG])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, updateAllCoins)
-    .addCommand(/^sb\s*([a-zA-Z])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:.\d+))([k%]?)$/, changeUpDownPercent, coinTypeValidator)
-    .addCommand(/^sb\s*([*])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:.\d+))([k%]?)$/, changeAllUpDownPercents)
+    .addCommand(/^sb\s*([a-zA-Z])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, changeUpDownPercent, coinTypeValidator)
+    .addCommand(/^sb\s*([*])\s*([uU])\s*([+-]?)((?:\d+.\d+)|(?:\d+))([k%]?)$/, changeAllUpDownPercents)
     .addInvalidHandler(invalidHandler);
 
 // create a bot
