@@ -73,17 +73,19 @@ function ohlcBuild (cwArray) {
     let arrIndex  = 0;
     cwArray.filter((e, i) => {
         if (i % 4 === 0 || i > 400) {
-            return e;
+            return true;
         }
+        return false;
     }).filter((e, i) => {
         if (e[2] && e[3] && e[4]) {
-            return e;
+            return true;
         }
         else {
             zerostr += (zerostr) ? ',' : '';
             zerostr += '[' + [i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1)].join(', ') + '] ';
         }
-    }).forEach((e) => { // extrace about 200 from 500 arrays
+        return false;
+    }).forEach((e) => { // extract about 200 from 500 arrays
         epochs[arrIndex] = e[0];
         highs[arrIndex] = e[2];
         lows[arrIndex] = e[3];
