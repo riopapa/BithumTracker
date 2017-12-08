@@ -159,7 +159,7 @@ function listener({epochs, highs, lows, closes, volumes}) {
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
         const msg = 'same data since ' + dateText(lastepoch) + ' [' + ++lastsame + ']';
-        if (lastsame > 10) {    // 180 sec * 10 = 30 minutes ?
+        if (lastsame > 5) {    // 180 sec * 10 = 30 minutes ?
             notifier.danger(msg, COINS_NAME[COINS_KEY.indexOf(CURRENCY)] + ' (' + CURRENCY + ') IS INACTIVE');
             lastsame = 0;
             return true;
@@ -339,7 +339,7 @@ function analyzeVolume() {
 
 function analyzeSlope() {
 
-    if (nowValues.slopeLast > 0.003 && nowValues.slopeLast > nowValues.slopeAvr * 2) {
+    if (nowValues.slopeLast > 0.005 && nowValues.slopeLast > nowValues.slopeAvr * 3) {
         appendMsg('Rapid Slope Change (' +  npercent(nowValues.slopeLast) + ') [' + nowValues.slopeSign + ']');
     }
 

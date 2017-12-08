@@ -64,40 +64,33 @@ let ohlcCrawler = () => {
 
 function ohlcBuild (cwArray) {
     // [ 0: CloseTime, 1: OpenPrice, 2:HighPrice, 3:LowPrice, 4:ClosePrice, 5:Volume ]
+
+    const indexFilter = (i) => (i % 4 === 0 || i > 400);
+    const containZero = (e) => (e[2] === 0 || e[3] === 0 || e[4] === 0);
+
+    const indexedCw = cwArray.filter((e, i) => indexFilter(i));
+
+    const zerostrs = indexedCw.filter((e) => containZero(e)).map((e, i) => [ i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1) ]);
+    if (zerostrs.length > 0) {
+        logger.debug('execluding zero, [' + zerostrs.length + '] arrays');
+        stream.write(dateText(cwArray[cwArray.length - 1][0]) +', {' + JSON.stringify(zerostrs) + ' }' + EOL);
+    }
+
     let epochs = [];
     let highs = [];
     let lows = [];
     let closes = [];
     let volumes = [];
-    let zerostr = '';
-    let arrIndex  = 0;
-    cwArray.filter((e, i) => {
-        if (i % 4 === 0 || i > 400) {
-            return true;
-        }
-        return false;
-    }).filter((e, i) => {
-        if (e[2] && e[3] && e[4]) {
-            return true;
-        }
-        else {
-            zerostr += (zerostr) ? ',' : '';
-            zerostr += '[' + [i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1)].join(', ') + '] ';
-        }
-        return false;
-    }).forEach((e) => { // extract about 200 from 500 arrays
-        epochs[arrIndex] = e[0];
-        highs[arrIndex] = e[2];
-        lows[arrIndex] = e[3];
-        closes[arrIndex] = e[4];
-        volumes[arrIndex] = roundTo(e[5], 1);
-        arrIndex++;
-    });
 
-    if (zerostr) {
-        logger.debug('execluding zero, [' + arrIndex + '] arrays');
-        stream.write(dateText(cwArray[cwArray.length - 1][0]) +', {' + zerostr + ' }' + EOL);
+    let ohlcAppender = (e) => {
+        epochs.push(e[0]);
+        highs.push(e[2]);
+        lows.push(e[3]);
+        closes.push(e[4]);
+        volumes.push(roundTo(e[5], 1));
     }
+
+    indexedCw.filter((e) => !containZero(e)).forEach(e => ohlcAppender(e));
     return {epochs, highs, lows, closes, volumes};
 }
 
