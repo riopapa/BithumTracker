@@ -159,12 +159,12 @@ function listener({epochs, highs, lows, closes, volumes}) {
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
         let msg = 'same data since ' + dateText(lastepoch) + ' [' + ++lastsame + ']';
-        if (lastsame > 20) {    // 180 sec * 20 = 1 hour?
-            logger.warn(msg);   // note) it may not be same data in a row
+        if (lastsame > 10) {    // 180 sec * 10 = 30 minutes ?
+            notifier.danger(msg, COINS_NAME[COINS_KEY.indexOf(CURRENCY)] + ' (' + CURRENCY + ') IS INACTIVE');
+            lastsame = 0;
             return true;
         }
-        notifier.danger(msg, COINS_NAME[COINS_KEY.indexOf(CURRENCY)] + ' (' + CURRENCY + ') IS INACTIVE');
-        lastsame = 0;
+        logger.warn(msg);   // note) it may not be same data in a row
     }
     lastepoch = epoch;
     return false;
