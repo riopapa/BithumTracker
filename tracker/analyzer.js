@@ -5,15 +5,21 @@ const LOG = process.env.LOG;
 const format = require('string-format');
 format.extend(String.prototype);
 
+const Promise = require('bluebird');
+const bhttp = require('bhttp');
+
 const momenttimezone = require('moment-timezone');
 const TIMEZONE = 'Asia/Seoul';
-const dateText = (epoch) => momenttimezone(epoch * 1000).tz(TIMEZONE).format('MM-DD HH:mm');
+const dateFormat = (epoch) => momenttimezone(epoch).tz(TIMEZONE).format('MM-DD HH:mm');
 
+const pad = require('pad');
 const numeral = require('numeral');
 const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
+const NPAD_SIZE = Number(process.env.NPAD_SIZE);
+const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
 
-const COINS_NAME = process.env.COINS_NAME.split(',');
-const COINS_KEY = process.env.COINS_KEY.split(',');
+const COINSNAME = process.env.COINS_NAME.split(',');
+const COINSKEY = process.env.COINS_KEY.split(',');
 
 const roundTo = require('round-to');
 const show = require('./showCoinValues.js');
@@ -62,14 +68,26 @@ watcher.on('change', (info) => {
 });
 
 const volumeCOUNT = 4;   // if recent volume goes high then...
-const volumeCOUNTMAX = volumeCOUNT * 8;
+const volumeCOUNTMAX = volumeCOUNT * 5;
 const slopeCOUNT = 4;   // if price varying slope is high then...
-const slopeCOUNTMAX = slopeCOUNT * 8;
+const slopeCOUNTMAX = slopeCOUNT * 5;
 const ohlcCrawler = require('./ohlcCrawler.js');
 ohlcCrawler.getEmitter().on('event', listener);
 
 const SELL = 'S';
 const BUY = 'B';
+
+let bithumbCrawler = () => {
+    Promise.try(() => bhttp.get('https://api.bithumb.com/public/ticker/' + currency))
+        .then(response => {
+            const result = response.body.data;
+            const now = npad(Number(result.closing_price));
+            const msg = 'Bithumb' + now + ', ' + dateFormat(new Date(Number(result.date)));
+            notifier.danger(msg, ' SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) );
+        }).catch((e) => {
+        logger.error(e);
+    });
+};
 
 /**
  * lister : main
@@ -79,15 +97,21 @@ const BUY = 'B';
  * - calculate MACD, Stochastic values
  * - alert to slack if values are within range
  *
- * @param ohlcs {Array} : prices array [{epoch, price, volume, date, high, low, close, open}]
+ * @param ohlcs {object} : prices array {epoch[], high[], low[], close[], volume[]}
  * @return none
  */
 
 function listener({epochs, highs, lows, closes, volumes}) {
 
     const tableLen = highs.length;
+    nowValues.msgText = '';
 
-    if (isCWDead(epochs[tableLen - 1])) {
+    if (isFirstTime) {
+        nowValues.msgText = '\nJust Started, with size [' + tableLen + ']';
+        isFirstTime = false;
+        logger.info(nowValues.msgText);
+    }
+    else if (isCWDead(epochs[tableLen - 1])) {
         return;
     }
 
@@ -124,17 +148,13 @@ function listener({epochs, highs, lows, closes, volumes}) {
     nowValues.slopeAvr = roundTo(slopes.slice(slopes.length - slopeCOUNTMAX).reduce((e1, e2) => Math.abs(e1) + Math.abs(e2)) / slopeCOUNTMAX,5);
     nowValues.slopeLast = roundTo(slopes.slice(slopes.length - slopeCOUNT).reduce((e1, e2) => Math.abs(e1) + Math.abs(e2)) / slopeCOUNT,5);
     nowValues.slopeSign = slopeSigns.reduce((e1, e2) => e1 + e2);
+    slopeSigns[0] = (slopeSigns[0] > 0) ? '+' : '-';
+    nowValues.slopeBar = slopeSigns.reduce((e1, e2) => e1 + '' + ((e2 > 0) ? '+' : '-'));
 
     nowValues.sellTarget = config.sellPrice * (1 - config.gapAllowance);
     nowValues.buyTarget = config.buyPrice * (1 + config.gapAllowance);
 
     nowValues.tradeType = '';
-    nowValues.msgText = '';
-
-    if (isFirstTime) {
-        nowValues.msgText = '\nJust Started, with size [' + tableLen + ']';
-        isFirstTime = false;
-    }
 
     analyzeHistogram();
     analyzeStochastic();
@@ -158,14 +178,10 @@ function listener({epochs, highs, lows, closes, volumes}) {
 
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
-        const msg = 'same data since ' + dateText(lastepoch) + ' [' + ++lastsame + ']';
-        logger.warn(msg);   // note) it may not be same data in a row
-        if (lastsame > 5) {    // 180 sec * 10 = 30 minutes ?
-            notifier.danger(msg, COINS_NAME[COINS_KEY.indexOf(CURRENCY)] + ' (' + CURRENCY + ') IS INACTIVE');
-            lastsame = 0;
-        }
+        bithumbCrawler();
         return true;
     }
+    lastsame = 0;
     lastepoch = epoch;
     return false;
 }
@@ -262,11 +278,11 @@ function analyzeStochastic() {
     let msg = '';
     if ((nowValues.dLast >= 80 && nowValues.kLast >= 80) && (nowValues.dNow < 80 || nowValues.kNow < 80) && nowValues.close >= nowValues.sellTarget) {
         nowValues.tradeType = SELL;
-        msg = 'Stochastic SELL SELL';
+        msg = 'Stochastic (d,k) SELL SELL';
     }
     else if ((nowValues.dLast <= 20 && nowValues.kLast <= 20) && (nowValues.dNow > 20 || nowValues.kNow > 20) && nowValues.close <= nowValues.buyTarget) {
         nowValues.tradeType = BUY;
-        msg = 'Stochastic BUY BUY';
+        msg = 'Stochastic (d,k) BUY BUY';
     }
     appendMsg(msg);
 }
@@ -374,6 +390,7 @@ function informTrade() {
 
 }
 
+
 /**
  * keepLog : append nowValues into log file
  *
@@ -387,13 +404,15 @@ function keepLog() {
 
         const str = [
             CURRENCY,
-            momenttimezone(new Date(nowValues.epoch)).tz(TIMEZONE).format('YY-MM-DD HH:mm'),
+            dateFormat(new Date(nowValues.epoch)),
             nowValues.close,
             nowValues.volume,
             nowValues.volumeAvr,
             nowValues.volumeLast,
             nowValues.histogram,
-            (nowValues.histoSign) ? 'C' : '',
+            (nowValues.histoSign) ? 'T' : 'F',
+            nowValues.slopeLast,
+            nowValues.slopeSign,
             nowValues.dNow,
             nowValues.kNow,
             nowValues.tradeType,
@@ -407,7 +426,7 @@ function keepLog() {
     // sometimes write value header
     const d = new Date(nowValues.epoch);
     if (d.getMinutes() > 55 && (d.getHours() % 3 === 1)) {
-        const head = 'coin, date and time  ,   close,  vol, volAvr, volLast, histo, Sign, dNow, kNow, B/S, msgText';
+        const head = 'coin, date time  , close,  vol, volAvr, volLast, histo, sign, slope, sign, dNow, kNow, B/S, msgText';
         stream.write(head + EOL);
     }
 }

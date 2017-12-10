@@ -50,7 +50,7 @@ function showUsage() {
     const header =  'Monitor CrytoCoins [' + process.env.COINS_KEY + ']';
     const usage = '*USAGE*\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
-        '      {' + coins_cmd + 'n}  {bsagn*}  {(+-)123(k%)}\n' +
+        '      {' + coins_cmd + 'n}  {bsagun*}  {(+-)123(k%)}\n' +
         '_Refer github_ README.md _for more detail_\nhttps://goo.gl/MQqVYV'; // https://github.com/riopapa/BithumTracker#usage';
 
     replier.sendSlack(usage, header, 'https://goo.gl/MQqVYV');
@@ -193,7 +193,7 @@ bot.on('start', function() {
 
 bot.on('message', function(data) {
 
-    logger.debug('data.type is ' + data.type);
+    // logger.debug('data.type is ' + data.type);
 
     if (data.type !== 'message') {
         return;
@@ -201,11 +201,11 @@ bot.on('message', function(data) {
 
     const text = data.text.trim();
 
-    logger.debug('command = [' + text + ']');
-
     if (text.length < 2 || !text.startsWith('sb')) {
         return;
     }
+
+    logger.debug('command = [' + text + ']');
 
     if ((who.channel(bot, data.channel)) !== CHANNEL || !USERS.includes(who.user(bot, data.user))) {
         replier.sendText('Unauthorized channel or user.');

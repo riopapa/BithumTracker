@@ -21,10 +21,11 @@ function buildAttach(nv, cf) {
             prev += momenttimezone(new Date(nv.pEpoch[i] * 1000)).tz(TIMEZONE).format('HH:mm');
             prev += npad(nv.pClose[i]) + ' (' + npercent((nv.close - nv.pClose[i]) / nv.pClose[i]) + ')  ' + nv.pVolume[i] + '\n';
         }
-        const delta = (nv.periodMax - nv.periodMin) / 20;
-        prev += 'm(' + npercent((nv.close - nv.periodMin ) / nv.periodMin) + ')|' +
-            pad((nv.close - nv.periodMin) / delta,'v', '-') + pad((nv.periodMax - nv.close) / delta, '|','-') +
-            'x(' + npercent((nv.close - nv.periodMax ) / nv.periodMax) + ')';
+        const delta = (nv.periodMax - nv.periodMin) / nv.slopeBar.length;
+        prev += 'm(' + numeral((nv.close - nv.periodMin ) / nv.periodMin * 100).format('0.0') + ')' +
+            nv.slopeBar.substring((nv.close - nv.periodMin) / delta, 1) + 'v' +
+            nv.slopeBar.substring((nv.close - nv.periodMin) / delta + 1) +
+            'x(' + numeral((nv.close - nv.periodMax ) / nv.periodMax * 100).format('0.0')  + ')';
 
         return new coinConfig(CURRENCY)
 

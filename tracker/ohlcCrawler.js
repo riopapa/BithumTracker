@@ -37,7 +37,6 @@ const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/' + currency +
 let rollers = require('streamroller');
 let stream = new rollers.RollingFileStream(LOG + currency + '/ohlc_raw.log', 5000000, 2);
 const dateText = (epoch) => momenttimezone(epoch * 1000).tz(TIMEZONE).format('MM-DD HH:mm');
-let lastepoch = 0;
 
 const events = require('events');
 const emitter = new events.EventEmitter();
@@ -72,7 +71,7 @@ function ohlcBuild (cwArray) {
 
     const zerostrs = indexedCw.filter((e) => containZero(e)).map((e, i) => [ i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1) ]);
     if (zerostrs.length > 0) {
-        logger.debug('execluding zero, [' + zerostrs.length + '] arrays');
+        logger.debug('execluding [' + zerostrs.length + '] zero array(s)');
         stream.write(dateText(cwArray[cwArray.length - 1][0]) +', {' + JSON.stringify(zerostrs) + ' }' + EOL);
     }
 
@@ -94,5 +93,5 @@ function ohlcBuild (cwArray) {
     return {epochs, highs, lows, closes, volumes};
 }
 
-ohlcCrawler();
+// ohlcCrawler();
 new CronJob(CRON_SCHEDULE, ohlcCrawler, null, true, TIMEZONE);
