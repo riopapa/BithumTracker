@@ -236,10 +236,10 @@ NPAD_SIZE=10                    // space padding size after number conversion wi
 
 -   *b*: buyPrice,
 -   *s*: sellPrice
--   *g*: gapAllowance %
--   *a*: adjust buy,sell based on nowPrice +/- gapAllowance * 3 %
--   *u*: rapid price up/down warning % 
--   *n*: nowPrice
+-   *g*: gapAllowance (%) warning if buy, sell price is near to gapAllowance
+-   *a*: adjust buy,sell price to nowPrice +/- gapAllowance * 3 %
+-   *u*: price warning (%) to warn fast up/down against a few mins ago.  
+-   *n*: show nowPrice with configurations.
    
 ### _{amount}_
 
@@ -248,7 +248,7 @@ NPAD_SIZE=10                    // space padding size after number conversion wi
 -   *+100* : add 100 to current set
 -   *-3k* : subtract 3000 from current set
 -   *+3%* : add 3% on current set
--   *0.03* : set to 0.03% (gap only)
+-   *0.03* : set to 0.03% (gap, up/down only)
 
 ### _(note)_
  

@@ -17,7 +17,7 @@ exports.attach = (nv, cf) => buildAttach(nv, cf);
 function buildAttach(nv, cf) {
     try {
         let prev = '';
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < nv.pEpoch.length; i++) {
             prev += momenttimezone(new Date(nv.pEpoch[i] * 1000)).tz(TIMEZONE).format('HH:mm');
             prev += npad(nv.pClose[i]) + ' (' + npercent((nv.close - nv.pClose[i]) / nv.pClose[i]) + ')  ' + nv.pVolume[i] + '\n';
         }

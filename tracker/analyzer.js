@@ -80,10 +80,15 @@ const BUY = 'B';
 let bithumbCrawler = () => {
     Promise.try(() => bhttp.get('https://api.bithumb.com/public/ticker/' + currency))
         .then(response => {
-            const result = response.body.data;
-            const now = npad(Number(result.closing_price));
-            const msg = 'Bithumb' + now + ', ' + dateFormat(new Date(Number(result.date)));
-            notifier.danger(msg, ' SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) );
+            if (response.body.status === '0000') {
+                const price = Number(response.body.data.closing_price);
+                const date = Number(response.body.data.date);
+                const msg = 'Bithumb' + npad(Number(price)) + ', ' + dateFormat(new Date(date));
+                notifier.danger(msg, ' SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) );
+            }
+            else {
+                notifier.danger(JSON.stringify(response.body), ' BITHUMB MIGHT BE DEAD  since ' + dateFormat(lastepoch * 1000) );
+            }
         }).catch((e) => {
         logger.error(e);
     });
@@ -178,7 +183,10 @@ function listener({epochs, highs, lows, closes, volumes}) {
 
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
-        bithumbCrawler();
+        if (lastsame++ > 2) {
+            bithumbCrawler();
+            lastsame = 0;
+        }
         return true;
     }
     lastsame = 0;
@@ -426,7 +434,7 @@ function keepLog() {
     // sometimes write value header
     const d = new Date(nowValues.epoch);
     if (d.getMinutes() > 55 && (d.getHours() % 3 === 1)) {
-        const head = 'coin, date time  , close,  vol, volAvr, volLast, histo, sign, slope, sign, dNow, kNow, B/S, msgText';
+        const head = 'coin, date time  , close,  vol, vAvr, vLast, histo, sign, slope, sign, d, k, B/S, msgText';
         stream.write(head + EOL);
     }
 }
