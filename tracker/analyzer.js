@@ -80,15 +80,32 @@ const BUY = 'B';
 let bithumbCrawler = () => {
     Promise.try(() => bhttp.get('https://api.bithumb.com/public/ticker/' + currency))
         .then(response => {
+//            {"status":"0000","data":{
+//              "opening_price":"17786000","closing_price":"19144000","min_price":"17750000","max_price":"19900000",
+//              "average_price":"19080605.9105","units_traded":"72509.15826464","volume_1day":"72509.15826464",
+//              "volume_7day":"642811.43325903","buy_price":"19121000","sell_price":"19144000","date":"1513038662469"}}
             if (response.body.status === '0000') {
                 const price = Number(response.body.data.closing_price);
-                const date = Number(response.body.data.date);
-                const msg = 'Bithumb' + npad(Number(price)) + ', ' + dateFormat(new Date(date));
+                const ts = Number(response.body.data.date);
+                const msg = 'Bithumb' + npad(Number(price)) + ', ' + dateFormat(new Date(ts));
                 notifier.danger(msg, ' SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) );
             }
             else {
-                notifier.danger(JSON.stringify(response.body), ' BITHUMB MIGHT BE DEAD  since ' + dateFormat(lastepoch * 1000) );
+                korbitCrawler();
             }
+        }).catch((e) => {
+        logger.error(e);
+    });
+};
+
+let korbitCrawler = () => {
+    Promise.try(() => bhttp.get('https://api.korbit.co.kr/v1/ticker?currency_pair=' + currency + '_krw'))
+        .then(response => {
+//            {"timestamp":1513037980658,"last":"18900000"}
+            const price = Number(response.body.last);
+            const ts = Number(response.body.timestamp);
+            const msg = 'KORBIT' + npad(Number(price)) + ', ' + dateFormat(new Date(ts));
+            notifier.danger(msg, 'No Response from BITHUMB (' + CURRENCY + ')\nNo Response from CW since ' + dateFormat(lastepoch * 1000) );
         }).catch((e) => {
         logger.error(e);
     });

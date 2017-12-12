@@ -41,12 +41,14 @@ const dateText = (epoch) => momenttimezone(epoch * 1000).tz(TIMEZONE).format('MM
 const events = require('events');
 const emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
+let responseBody = {};
 let result = {};
 
 let ohlcCrawler = () => {
     Promise.try(() => bhttp.get(CRYPTOWATCH_URL))
         .then(response => {
-            result = response.body.result;
+            responseBody = response.body;
+            result = responseBody.result;
             const cwArray = result['180'];
             const ohlcs = ohlcBuild (cwArray);
             const cost = Number(response.body.allowance.cost);
@@ -58,7 +60,7 @@ let ohlcCrawler = () => {
             emitter.emit('event', ohlcs);
         }).catch((e) => {
             logger.error(e);
-            logger.error(JSON.stringify(result));
+            logger.error(JSON.stringify(responseBody));
     });
 };
 
