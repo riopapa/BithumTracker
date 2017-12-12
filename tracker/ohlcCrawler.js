@@ -42,22 +42,26 @@ const events = require('events');
 const emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
 let responseBody = {};
-let result = {};
+let ohlcs = {};
 
 let ohlcCrawler = () => {
     Promise.try(() => bhttp.get(CRYPTOWATCH_URL))
         .then(response => {
+            // {"result":{"180":
+            //     [[1512925200,17050000,17055000,16900000,16966000,223.30168,3788825900],
+            //      [1512925380,16966000,17002000,16957000,16995000,21.02319,357074370]]
+            // },"allowance":{"cost":2459681,"remaining":6840154909}}
             responseBody = response.body;
-            result = responseBody.result;
-            const cwArray = result['180'];
-            const ohlcs = ohlcBuild (cwArray);
-            const cost = Number(response.body.allowance.cost);
-            const remain = Number(response.body.allowance.remaining);
-            const remainPercent = remain / (cost + remain);
-            if ( remainPercent < 0.01) {
-                logger.error('allowance  remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
+            let result = responseBody.result;
+            if (typeof result['180'] !== 'undefined') {
+                ohlcs = ohlcBuild(result['180']);
+            }
+             else {
+                // {"result":{},"allowance":{"cost":60304548,"remaining":7053930325}}
+                logger.error('!!!@@!!! NO RESPONSE DATA from cw !!!@@!!!');
             }
             emitter.emit('event', ohlcs);
+            reviewCost ();
         }).catch((e) => {
             logger.error(e);
             logger.error(JSON.stringify(responseBody));
@@ -74,7 +78,7 @@ function ohlcBuild (cwArray) {
 
     const zerostrs = indexedCw.filter((e) => containZero(e)).map((e, i) => [ i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1) ]);
     if (zerostrs.length > 0) {
-        logger.debug('execluding [' + zerostrs.length + '] zero array(s)');
+        logger.debug('excluding [' + zerostrs.length + '] zero array(s)');
         stream.write(dateText(cwArray[cwArray.length - 1][0]) +', {' + JSON.stringify(zerostrs) + ' }' + EOL);
     }
 
@@ -94,6 +98,15 @@ function ohlcBuild (cwArray) {
 
     indexedCw.filter((e) => !containZero(e)).forEach(e => ohlcAppender(e));
     return {epochs, highs, lows, closes, volumes};
+}
+
+function reviewCost () {
+    const cost = Number(responseBody.allowance.cost);
+    const remain = Number(responseBody.allowance.remaining);
+    const remainPercent = remain / (cost + remain);
+    if ( remainPercent < 0.01) {
+        logger.error('<allowance>  remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
+    }
 }
 
 // ohlcCrawler();

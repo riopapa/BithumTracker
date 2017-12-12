@@ -131,7 +131,6 @@ function listener({epochs, highs, lows, closes, volumes}) {
     if (isFirstTime) {
         nowValues.msgText = '\nJust Started, with size [' + tableLen + ']';
         isFirstTime = false;
-        logger.info(nowValues.msgText);
     }
     else if (isCWDead(epochs[tableLen - 1])) {
         return;
