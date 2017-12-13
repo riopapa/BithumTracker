@@ -59,12 +59,13 @@ let ohlcCrawler = () => {
              else {
                 // {"result":{},"allowance":{"cost":60304548,"remaining":7053930325}}
                 logger.error('!!!@@!!! NO RESPONSE DATA from cw !!!@@!!!');
+                logger.error(JSON.stringify(responseBody));
             }
             emitter.emit('event', ohlcs);
             reviewCost ();
         }).catch((e) => {
             logger.error(e);
-            logger.error(JSON.stringify(responseBody));
+            logger.error(JSON.stringify(responseBody).substr(0, 60));
     });
 };
 

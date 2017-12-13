@@ -68,9 +68,9 @@ watcher.on('change', (info) => {
 });
 
 const volumeCOUNT = 4;   // if recent volume goes high then...
-const volumeCOUNTMAX = volumeCOUNT * 5;
+const volumeCOUNTMAX = volumeCOUNT * 6;
 const slopeCOUNT = 4;   // if price varying slope is high then...
-const slopeCOUNTMAX = slopeCOUNT * 5;
+const slopeCOUNTMAX = slopeCOUNT * 6;
 const ohlcCrawler = require('./ohlcCrawler.js');
 ohlcCrawler.getEmitter().on('event', listener);
 
