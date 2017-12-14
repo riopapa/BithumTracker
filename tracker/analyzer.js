@@ -99,13 +99,14 @@ let bithumbCrawler = () => {
 };
 
 let korbitCrawler = () => {
-    Promise.try(() => bhttp.get('https://api.korbit.co.kr/v1/ticker?currency_pair=' + currency + '_krw'))
+    Promise.try(() => bhttp.get('https://api.korbit.co.kr/v1/ticker?currency_pair=' + currency + '_krw', {decodeJSON: true}))
         .then(response => {
+            let body = response.body;
 //            {"timestamp":1513037980658,"last":"18900000"}
-            const price = Number(response.body.last);
-            const ts = Number(response.body.timestamp);
-            const msg = 'KORBIT' + npad(Number(price)) + ', ' + dateFormat(new Date(ts));
-            notifier.danger(msg, 'No Response from BITHUMB (' + CURRENCY + ')\nNo Response from CW since ' + dateFormat(lastepoch * 1000) );
+            const ts = Number(body.timestamp);
+            const price = Number(body.last);
+            const msg = 'KORBIT' + npad(price) + ', ' + dateFormat(new Date(ts));
+            notifier.danger(msg, 'No Response from BITHUMB (' + CURRENCY + ') and from CW since ' + dateFormat(lastepoch * 1000) );
         }).catch((e) => {
         logger.error(e);
     });

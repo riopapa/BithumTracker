@@ -95,7 +95,7 @@ function ohlcBuild (cwArray) {
         lows.push(e[3]);
         closes.push(e[4]);
         volumes.push(roundTo(e[5], 1));
-    }
+    };
 
     indexedCw.filter((e) => !containZero(e)).forEach(e => ohlcAppender(e));
     return {epochs, highs, lows, closes, volumes};
@@ -106,7 +106,7 @@ function reviewCost () {
     const remain = Number(responseBody.allowance.remaining);
     const remainPercent = remain / (cost + remain);
     if ( remainPercent < 0.01) {
-        logger.error('<allowance>  remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
+        logger.error('[allowance]  remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
     }
 }
 
