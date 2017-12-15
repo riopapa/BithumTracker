@@ -1,0 +1,10 @@
+{
+  "bithumb" : [ "btc", "bch", "eth", "btg"],
+  "korbit" : [ "btc", "bch", "eth", "btg"],
+
+  "cw" : [ "bitfinex:btcusd", "bitfinex:bchusd", "bitfinex:ethusd", "bitfinex:btgusd",
+    "gdax:btcusd", "gdax:ethusd", "bitstamp:btcusd", "bitmex:btcusd-perpetual-futures",
+    "bithumb:btckrw", "bithumb:ethkrw", "bithumb:bchkrw", "bithumb:btgkrw",
+    "okcoin:btcusd", "okcoin:btcusd-quarterly-futures", "kraken:ethusd"
+  ]
+}

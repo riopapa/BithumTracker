@@ -18,9 +18,6 @@ const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
 const NPAD_SIZE = Number(process.env.NPAD_SIZE);
 const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
 
-const COINSNAME = process.env.COINS_NAME.split(',');
-const COINSKEY = process.env.COINS_KEY.split(',');
-
 const roundTo = require('round-to');
 const show = require('./showCoinValues.js');
 const replier = require('./replier.js');
@@ -88,7 +85,7 @@ let bithumbCrawler = () => {
                 const price = Number(response.body.data.closing_price);
                 const ts = Number(response.body.data.date);
                 const msg = 'Bithumb' + npad(Number(price)) + ', ' + dateFormat(new Date(ts));
-                notifier.danger(msg, ' SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) );
+                notifier.danger(msg, ' SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) + ' [' + lastsame + ']' );
             }
             else {
                 korbitCrawler();
@@ -136,6 +133,10 @@ function listener({epochs, highs, lows, closes, volumes}) {
     else if (isCWDead(epochs[tableLen - 1])) {
         return;
     }
+    if (lastsame !== 0) {
+        nowValues.msgText = '\nCW begin to response now, idle was [' + lastsame + ']';
+        lastsame = 0;
+    }
 
     const macds = calculateMACD(closes);
     const stochastic = calculateStochastic(highs, lows, closes);
@@ -147,6 +148,8 @@ function listener({epochs, highs, lows, closes, volumes}) {
     const slopeSigns = temp.map((c, i) => { return (temp[i-1] < c) ? 1 : -1});
 
     nowValues.epoch = epochs[tableLen - 1] * 1000;
+    nowValues.high = highs[tableLen - 1];
+    nowValues.low = lows[tableLen - 1];
     nowValues.close = closes[tableLen - 1];
     nowValues.volume = volumes[tableLen - 1];
     nowValues.pEpoch = [epochs[tableLen - 3], epochs[tableLen - 5], epochs[tableLen - 7], epochs[Math.trunc(tableLen / 2)], epochs[0]] ;
@@ -200,13 +203,12 @@ function listener({epochs, highs, lows, closes, volumes}) {
 
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
-        if (lastsame++ > 2) {
+        if (lastsame++ % 3 === 2) {
             bithumbCrawler();
             lastsame = 0;
         }
         return true;
     }
-    lastsame = 0;
     lastepoch = epoch;
     return false;
 }
@@ -430,6 +432,8 @@ function keepLog() {
         const str = [
             CURRENCY,
             dateFormat(new Date(nowValues.epoch)),
+            nowValues.high,
+            nowValues.low,
             nowValues.close,
             nowValues.volume,
             nowValues.volumeAvr,
@@ -451,7 +455,7 @@ function keepLog() {
     // sometimes write value header
     const d = new Date(nowValues.epoch);
     if (d.getMinutes() > 55 && (d.getHours() % 3 === 1)) {
-        const head = 'coin, date time  , close,  vol, vAvr, vLast, histo, sign, slope, sign, d, k, B/S, msgText';
+        const head = 'coin, date time  ,    high,     low,   close,  vol, vAvr, vLast, histo, sign, slope, sign, d, k, B/S, msg';
         stream.write(head + EOL);
     }
 }

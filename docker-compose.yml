@@ -15,6 +15,15 @@ services:
   image: riopapa/coin_botmanager
 
 # --------------------------------------------
+ gathercoin:
+  build:
+   context: ./gathercoin
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+  image: riopapa/gathercoin
+
+# --------------------------------------------
  tracker_bch:
   build:
    context: ./tracker
