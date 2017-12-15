@@ -131,10 +131,9 @@ let updateConfig = (match) => {
         replier.sendText('undefined config field: ' + c.command);   // should not happen
         process.exit(11);
     }
-    fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
+    fs.writeFileSync(configFile, JSON.stringify(cf, null, 2), 'utf-8');
     logger.debug('Update configration completed..');
 };
-
 
 /**
  * changeUpDown : change rapid price up down alert rate
