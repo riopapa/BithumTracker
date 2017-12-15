@@ -16,8 +16,6 @@ ADD . /app
 
 RUN mkdir -p /app/config
 
-RUN mkdir -p /app/chartData
-
-VOLUME [ "/app/config", "/app/chartData", "/app/log" ]
+VOLUME [ "/app/config", "/app/log" ]
 
 CMD node tracker.js
