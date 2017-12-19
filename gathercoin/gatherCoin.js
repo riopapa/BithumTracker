@@ -5,7 +5,7 @@ const json = require('json-file');
 let readConfigFile = (path) => new json.read(path);
 const EOL = require('os').EOL;
 
-const CONFIG_FILE = '../config/gathercoin/gatherCoin.json';
+const CONFIG_FILE = './config/gathercoin/gatherCoin.json';
 let config = readConfigFile(CONFIG_FILE).data;
 
 const Promise = require('bluebird');
@@ -16,7 +16,7 @@ const CRON_SCHEDULE = '30 */1 * * * *';
 const TIMEZONE = 'Asia/Seoul';
 
 const rollers = require('streamroller');
-const stream = new rollers.RollingFileStream('../log/gathercoin/gathercoin.csv' , 5000000, 10);
+const stream = new rollers.RollingFileStream('./log/gathercoin/gathercoin.csv' , 5000000, 10);
 
 const Watcher = require('watch-files');
 const watcher = Watcher({
@@ -33,8 +33,8 @@ const momenttimezone = require('moment-timezone');
 const dateLFormat = (epoch) => momenttimezone(epoch).tz(TIMEZONE).format('YY-MM-DD HH:mm');
 
 let log4js = require('log4js');
-let logCf = new json.read('../config/loggerConfig.json').data;
-logCf.appenders.file.filename = '../log/gathercoin/history.log';
+let logCf = new json.read('./config/loggerConfig.json').data;
+logCf.appenders.file.filename = './log/gathercoin/history.log';
 log4js.configure(logCf);
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
