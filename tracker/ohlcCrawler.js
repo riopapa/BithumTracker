@@ -53,19 +53,22 @@ let ohlcCrawler = () => {
             // },"allowance":{"cost":2459681,"remaining":6840154909}}
             responseBody = response.body;
             let result = responseBody.result;
-            if (typeof result['180'] !== 'undefined') {
+            try {
                 ohlcs = ohlcBuild(result['180']);
             }
-             else {
-                // {"result":{},"allowance":{"cost":60304548,"remaining":7053930325}}
-                logger.error('!!!@@!!! NO RESPONSE DATA from cw !!!@@!!!');
-                logger.error(JSON.stringify(responseBody));
+            catch (e) {
+                logger.error(e);
+                logger.error('result has no [180]' + JSON.stringify(responseBody).substr(0, 160));
             }
-            emitter.emit('event', ohlcs);
             reviewCost ();
+            emitter.emit('event', ohlcs);
         }).catch((e) => {
-            logger.error(e);
-            logger.error(JSON.stringify(responseBody).substr(0, 60));
+            if (e.code === 'ECONNREFUSED') {
+                logger.info('korbit refused');
+            }
+            else {
+                logger.error(e);
+            }
     });
 };
 
@@ -105,7 +108,7 @@ function reviewCost () {
     const cost = Number(responseBody.allowance.cost);
     const remain = Number(responseBody.allowance.remaining);
     const remainPercent = remain / (cost + remain);
-    if ( remainPercent < 0.01) {
+    if ( remainPercent < 0.1) {
         logger.error('[allowance]  remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
     }
 }

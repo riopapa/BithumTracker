@@ -59,7 +59,7 @@ function showUsage() {
 
 let showCoin = (match) => show.info(COINS_KEY[COINS_CMD.indexOf(match[1])], 'Current Values');
 
-let showActiveCoins = () => COINS_KEY.forEach(_ => show.info(_, 'Current Config'));
+let showActiveCoins = () => COINS_KEY.forEach(_ => show.info(_, 'Current Config ' +  _));
 
 let updateCoin = (match) => {
     updateConfig(match);
@@ -192,13 +192,10 @@ bot.on('start', function() {
 
 bot.on('message', function(data) {
 
-    // logger.debug('data.type is ' + data.type);
-
     if (data.type !== 'message') {
         return;
     }
-
-    const text = data.text.trim();
+    const text = data.text;
 
     if (text.length < 2 || !text.startsWith('sb')) {
         return;

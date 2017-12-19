@@ -26,6 +26,7 @@ const LOG = process.env.LOG;
 const TREND_FILENAME =  process.env.TREND_FILENAME;
 
 exports.info = (coin, msg) => showCoinStatus(coin, msg);
+exports.action = () => waitForAction();
 
 function showCoinStatus(coin, msg) {
     const response = (value) => buildAttach(coin, value);
@@ -77,4 +78,10 @@ function buildAttach(coin, value) {
     } catch (e) {
         throw new Error(e);
     }
+}
+
+function waitForAction (coin) {
+
+    let msg = new coinConfig(coin)
+
 }

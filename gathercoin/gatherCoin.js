@@ -5,7 +5,7 @@ const json = require('json-file');
 let readConfigFile = (path) => new json.read(path);
 const EOL = require('os').EOL;
 
-const CONFIG_FILE = './config/gathercoin/gatherCoin.json';
+const CONFIG_FILE = '../config/gathercoin/gatherCoin.json';
 let config = readConfigFile(CONFIG_FILE).data;
 
 const Promise = require('bluebird');
@@ -16,7 +16,7 @@ const CRON_SCHEDULE = '30 */1 * * * *';
 const TIMEZONE = 'Asia/Seoul';
 
 const rollers = require('streamroller');
-const stream = new rollers.RollingFileStream('./log/gathercoin/gathercoin.csv' , 1000000, 10);
+const stream = new rollers.RollingFileStream('../log/gathercoin/gathercoin.csv' , 1000000, 10);
 
 const Watcher = require('watch-files');
 const watcher = Watcher({
@@ -33,8 +33,8 @@ const momenttimezone = require('moment-timezone');
 const dateLFormat = (epoch) => momenttimezone(epoch).tz(TIMEZONE).format('YY-MM-DD HH:mm');
 
 let log4js = require('log4js');
-let logCf = new json.read('./config/loggerConfig.json').data;
-logCf.appenders.file.filename = './log/gathercoin/history.log';
+let logCf = new json.read('../config/loggerConfig.json').data;
+logCf.appenders.file.filename = '../log/gathercoin/history.log';
 log4js.configure(logCf);
 let log4js_extend = require('log4js-extend');
 log4js_extend(log4js, {
@@ -62,10 +62,16 @@ let bithumbCoin = (coin) => {
                 writeCoin ('bit' , coin, ts, price);
             }
             else {
-                logger.error('no response from bithumb ' + coin);
+                logger.warn('no response from bithumb ' + coin + ', status code:' + response.body.status);
+                logger.debug(response.body);
             }
         }).catch((e) => {
-        logger.error(e);
+            if (e.code === 'ECONNREFUSED') {
+                logger.info('bithumb refused');
+            }
+            else {
+                logger.error(e);
+            }
     });
 };
 
@@ -81,7 +87,12 @@ let korbitCoin = (coin) => {
             }
             writeCoin ('kor' , coin, ts, price);
         }).catch((e) => {
-        logger.error(e);
+            if (e.code === 'ECONNREFUSED') {
+                logger.info('korbit refused');
+            }
+            else {
+                logger.error(e);
+            }
     });
 };
 
@@ -89,15 +100,27 @@ let cwCoin = () => {
     Promise.try(() => bhttp.get('https://api.cryptowat.ch/markets/prices'))
         .then(response => {
             let result = response.body.result;
+
 //            {"bitfinex:avtbtc":0.00026,"bitfinex:avteth":0.007294,"bitfinex:avtusd":4.45,
 //              "bitfinex:bccbtc":0.92888,"bitfinex:bccusd":16900,"bitfinex:bchbtc":0.1021,
             config.cw.forEach(c => {
-                const price = result[c];
-                writeCoin(c.replace(':',','), nowEpoch, price);      // replacing epoch with latest epoch
+                try {
+                    const price = result[c];
+                    writeCoin(c.replace(':',','), nowEpoch, price);      // replacing epoch with latest epoch
+                }
+                catch(e) {
+                    const price = -1;
+                    writeCoin(c.replace(':',','), nowEpoch, price);      // replacing epoch with latest epoch
+                }
             })
         }).catch((e) => {
-        logger.error(e);
-    });
+            if (e.code === 'ECONNREFUSED') {
+                logger.info('cw refused');
+            }
+            else {
+                logger.error(e);
+            }
+        });
 };
 
 function writeCoin (market, coin, ts, price) {
