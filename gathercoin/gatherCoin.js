@@ -16,7 +16,7 @@ const CRON_SCHEDULE = '30 */1 * * * *';
 const TIMEZONE = 'Asia/Seoul';
 
 const rollers = require('streamroller');
-const stream = new rollers.RollingFileStream('../log/gathercoin/gathercoin.csv' , 1000000, 10);
+const stream = new rollers.RollingFileStream('../log/gathercoin/gathercoin.csv' , 5000000, 10);
 
 const Watcher = require('watch-files');
 const watcher = Watcher({

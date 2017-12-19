@@ -49,6 +49,7 @@ const replaceall = require('replaceall');
 let isFirstTime = true; // inform current setting when this module is started
 let lastepoch = 0;
 let lastsame = 0;
+let lastbithumb = 0;
 
 let config = readConfigFile(CONFIG_FILE).data;
 let sellBoundaryCount = 0;
@@ -133,8 +134,9 @@ function listener({epochs, highs, lows, closes, volumes}) {
     else if (isCWDead(epochs[tableLen - 1])) {
         return;
     }
-    if (lastsame !== 0) {
+    if (lastbithumb) {
         nowValues.msgText = '\nCW begin to response now, idle was [' + lastsame + ']';
+        lastbithumb = 0;
         lastsame = 0;
     }
 
@@ -203,9 +205,9 @@ function listener({epochs, highs, lows, closes, volumes}) {
 
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
-        if (lastsame++ % 3 === 2) {
+        if (++lastsame % 4 === 1) {
             bithumbCrawler();
-            lastsame = 0;
+            lastbithumb++;
         }
         return true;
     }
