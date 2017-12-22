@@ -205,7 +205,7 @@ function listener({epochs, highs, lows, closes, volumes}) {
 
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
-        if (++lastsame % 4 === 1) {
+        if (++lastsame % 5 === 4) {
             bithumbCrawler();
             lastbithumb++;
         }
@@ -327,7 +327,7 @@ function analyzeBoundary() {
 
     if (nowValues.close > config.sellPrice) {
         nowValues.tradeType = SELL;
-        let msg = 'Go over SELL boundary (' + sellBoundaryCount + ')';
+        let msg = '△△Go over SELL boundary△△ (' + sellBoundaryCount + ')';
         if (sellBoundaryCount++ > 3) {   // if goes over boundary several times, then adjust boundary temperary
             config.sellPrice = roundTo(nowValues.close * (1 + config.gapAllowance),config.priceRadix + 1);
             sellBoundaryCount = 0;
@@ -337,7 +337,7 @@ function analyzeBoundary() {
     }
     else if (nowValues.close < config.buyPrice) {
         nowValues.tradeType = BUY;
-        let msg = 'Go under BUY boundary (' + buyBoundaryCount + ')';
+        let msg = '▽▽Go under BUY boundary▽▽ (' + buyBoundaryCount + ')';
         if (buyBoundaryCount++ > 3) {
             config.buyPrice = roundTo(nowValues.close * (1 - config.gapAllowance), config.priceRadix + 1);
             buyBoundaryCount = 0;
@@ -390,11 +390,11 @@ function analyzeSlope() {
 
     if (nowValues.close < nowValues.pClose[2] * (1 - config.updown)) {
         nowValues.tradeType = SELL;
-        appendMsg('Fast Price DOWN (' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
+        appendMsg('▽▽Fast Price DOWN▽▽ (' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
     }
     else if (nowValues.close > nowValues.pClose[2] * (1 + config.updown)) {
         nowValues.tradeType = BUY;
-        appendMsg('Fast Price UP (' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
+        appendMsg('△△Fast Price UP△△ (' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
     }
 }
 
