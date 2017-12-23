@@ -66,12 +66,7 @@ let bithumbCoin = (coin) => {
                 logger.debug(response.body);
             }
         }).catch((e) => {
-            if (e.code === 'ECONNREFUSED') {
-                logger.info('bithumb refused');
-            }
-            else {
-                logger.error(e);
-            }
+            logError(e);
     });
 };
 
@@ -87,12 +82,7 @@ let korbitCoin = (coin) => {
             }
             writeCoin ('kor' , coin, ts, price);
         }).catch((e) => {
-            if (e.code === 'ECONNREFUSED') {
-                logger.info('korbit refused');
-            }
-            else {
-                logger.error(e);
-            }
+            logError(e);
     });
 };
 
@@ -114,14 +104,24 @@ let cwCoin = () => {
                 }
             })
         }).catch((e) => {
-            if (e.code === 'ECONNREFUSED') {
-                logger.info('cw refused');
-            }
-            else {
-                logger.error(e);
-            }
+            logError(e);
         });
 };
+
+function logError(e) {
+    if (e.code === 'ECONNREFUSED') {
+        logger.info('bithumb refused');
+    }
+    else if (e.code === 'ECONNRESET') {
+        logger.info('bithumb conn reset');
+    }
+    else if (e.code === '606') {
+        logger.info('bithumb timeout');
+    }
+    else {
+        logger.error(e);
+    }
+}
 
 function writeCoin (market, coin, ts, price) {
     try {
