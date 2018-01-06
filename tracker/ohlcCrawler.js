@@ -36,6 +36,7 @@ const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/' + currency +
 
 let rollers = require('streamroller');
 let stream = new rollers.RollingFileStream(LOG + currency + '/ohlc_raw.log', 5000000, 2);
+let streamcw = new rollers.RollingFileStream(LOG + currency + '/cw_cost.log', 5000000, 2);
 const dateText = (epoch) => momenttimezone(epoch * 1000).tz(TIMEZONE).format('MM-DD HH:mm');
 
 const events = require('events');
@@ -64,7 +65,10 @@ let ohlcCrawler = () => {
             emitter.emit('event', ohlcs);
         }).catch((e) => {
             if (e.code === 'ECONNREFUSED') {
-                logger.info('korbit refused');
+                logger.info('cw connect refused');
+            }
+            else if (e.code === 'ECONNRESET') {
+                logger.info('cw connect reset');
             }
             else {
                 logger.error(e);
@@ -104,12 +108,16 @@ function ohlcBuild (cwArray) {
     return {epochs, highs, lows, closes, volumes};
 }
 
-function reviewCost () {
+function reviewCost() {
+    return;
+
     const cost = Number(responseBody.allowance.cost);
     const remain = Number(responseBody.allowance.remaining);
     const remainPercent = remain / (cost + remain);
+    const date = momenttimezone(new Date()).tz(TIMEZONE).format('MM-DD HH:mm');
+    streamcw.write(date + ', ' + cost + ' + ' + remain+ '= ' + (cost + remain)  + ', ' + remainPercent + EOL);
     if ( remainPercent < 0.1) {
-        logger.error('[allowance]  remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
+        logger.error('[allowance] remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
     }
 }
 

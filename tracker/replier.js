@@ -14,9 +14,9 @@ const COINS_KEY = process.env.COINS_KEY.split(',');
 
 let log4js = require('log4js');
 const logger = log4js.getLogger('replier:' + currency);
-const SpecialChars = ' ~!_-:|*@#';
-const BracketCharsL = '[{(';
-const BracketCharsR = ']})';
+const SpecialChars = ' ~!_-:|*@#=.;\`"^';
+const BracketCharsL = '[{(< !|';
+const BracketCharsR = ']})> !|';
 const SpecialCharsLength = SpecialChars.length;
 const BracketCharsLength = BracketCharsL.length;
 
@@ -26,7 +26,7 @@ exports.sendAttach = (iconName, text, attachs) => sendWithAttach(iconName, text,
 
 function sendWithAttach(iconName, text, attachs) {
     requestMessage(buildMessage(iconName, text, attachs));
-    logger.debug(replaceall('\n', '; ', text));
+    logger.warn(replaceall('\n', '; ', text));
 }
 
 function buildMessage(iconName, text, attachs = null) {

@@ -39,6 +39,7 @@ function buildAttach(nv, cf) {
             .addField('Volume (avr/last)', numeral(nv.volume).format('0,0.0')  +
                 '  (' + numeral(nv.volumeLast / nv.volumeAvr * 100).format('0,0') + '%)\n'  +
                 numeral(nv.volumeAvr).format('0,0.0') + ' / ' + numeral(nv.volumeLast).format('0,0.0'))
+            // .addField('outcome', nv.outcome + ' / ' + nv.outcomes)
         ;
     } catch (e) {
         throw new Error(e);
