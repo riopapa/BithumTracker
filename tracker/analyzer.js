@@ -83,6 +83,7 @@ const RATE_BOUNDARY = Number(process.env.BOUNDARY);
 const RATE_VOLUME = Number(process.env.VOLUME);
 const RATE_SLOPE = Number(process.env.SLOPE);
 const RATE_HILOW = Number(process.env.HILOW);
+const RATE_INFORM = Number(process.env.INFORM);
 
 let outcomes = [];
 let outMsgs = [];
@@ -98,7 +99,7 @@ let bithumbCrawler = () => {
                 const price = Number(response.body.data.closing_price);
                 const ts = Number(response.body.data.date);
                 const msg = 'Bithumb' + npad(Number(price)) + ', ' + dateFormat(new Date(ts));
-                notifier.danger(msg, ' SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) + ' [' + lastsame + ']' );
+                logger.info(msg + ', SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) + ' [' + lastsame + ']' );
             }
             else {
                 korbitCrawler();
@@ -116,7 +117,7 @@ let korbitCrawler = () => {
             const ts = Number(body.timestamp);
             const price = Number(body.last);
             const msg = 'KORBIT' + npad(price) + ', ' + dateFormat(new Date(ts));
-            notifier.danger(msg, 'No Response from BITHUMB (' + CURRENCY + ') and from CW since ' + dateFormat(lastepoch * 1000) );
+            logger.warn(msg + ', No Response from BITHUMB (' + CURRENCY + ') and from CW since ' + dateFormat(lastepoch * 1000) );
         }).catch((e) => {
         logger.error(e);
     });
@@ -131,13 +132,13 @@ let korbitCrawler = () => {
 
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
-        if (++lastsame % 5 === 4) {
+        logger.debug(dateFormat(epoch * 1000) + ' is same as before ' + lastsame);
+        if (++lastsame % 10 === 9) {
             bithumbCrawler();
             lastbithumb++;
         }
         return true;
     }
-    lastepoch = epoch;
     return false;
 }
 
@@ -236,12 +237,12 @@ function analyzeStochastic() {
     if ((nowValues.dLast >= 80 && nowValues.kLast >= 80) && (nowValues.dNow < 80 || nowValues.kNow < 80) && nowValues.close >= nowValues.sellTarget) {
         nowValues.tradeType = SELL;
         msg = 'Stochastic (d,k) SELL SELL';
-        nowValues.outcome += RATE_STOCHASTIC * (0.9 + 0.1 * (nowValues.dLast + nowValues.kLast - nowValues.dNow - nowValues.kNow));
+        nowValues.outcome += RATE_STOCHASTIC * (0.5 + 0.03 * (nowValues.dLast + nowValues.kLast - nowValues.dNow - nowValues.kNow));
     }
     else if ((nowValues.dLast <= 20 && nowValues.kLast <= 20) && (nowValues.dNow > 20 || nowValues.kNow > 20) && nowValues.close <= nowValues.buyTarget) {
         nowValues.tradeType = BUY;
         msg = 'Stochastic (d,k) BUY BUY';
-        nowValues.outcome += RATE_STOCHASTIC * (0.9 + 0.1 * (nowValues.dNow + nowValues.kNow - nowValues.dLast - nowValues.kLast));
+        nowValues.outcome += RATE_STOCHASTIC * (0.5 + 0.03 * (nowValues.dNow + nowValues.kNow - nowValues.dLast - nowValues.kLast));
     }
     appendMsg(msg);
 }
@@ -291,17 +292,17 @@ function analyzeVolume() {
     let msg = '';
     const volumeRATE = 2.5;
     if (nowValues.volumeLast > nowValues.volumeAvr * volumeRATE) {
-        msg = 'Big Volume (> ' + roundTo(nowValues.volumeLast / nowValues.volumeAvr * 100,0) + '%), ';
+        msg = 'Big Volume (>' + roundTo(nowValues.volumeLast / nowValues.volumeAvr * 100,0) + '%), ';
         nowValues.outcome += RATE_VOLUME * (nowValues.volumeLast / nowValues.volumeAvr - 1);
         if (nowValues.close > nowValues.sellTarget) {
             nowValues.tradeType = SELL;
             msg += 'SELL ?';
-            nowValues.outcome += RATE_VOLUME * 0.5;
+            nowValues.outcome += RATE_VOLUME * 0.3;
         }
         else if (nowValues.close < nowValues.buyTarget) {
             nowValues.tradeType = BUY;
             msg += 'BUY ?';
-            nowValues.outcome += RATE_VOLUME * 0.5;
+            nowValues.outcome += RATE_VOLUME * 0.3;
         }
         else {
             msg += 'BUY/SELL ?';
@@ -319,9 +320,9 @@ function analyzeVolume() {
 
 function analyzeSlope() {
 
-    if (nowValues.slopeLast > 0.002 && nowValues.slopeLast > nowValues.slopeAvr * 3) {
-        nowValues.outcome += RATE_SLOPE * (1 + 0.5 * (nowValues.slopeLast / nowValues.slopeAvr));
-        appendMsg('Rapid Slope Change (' +  npercent(nowValues.slopeLast) + ') [' + nowValues.slopeSign + ']');
+    if (nowValues.slopeLast > 0.002 && nowValues.slopeLast > nowValues.slopeAvr * 2.5) {
+        nowValues.outcome += RATE_SLOPE * (0.5 + 0.3 * (nowValues.slopeLast / nowValues.slopeAvr));
+        appendMsg('Rapid Slope Change (' +  npercent(nowValues.slopeLast / nowValues.slopeAvr) + ') [' + nowValues.slopeSign + ']');
     }
 
     if (nowValues.close < nowValues.pClose[2] * (1 - config.updown)) {
@@ -345,7 +346,7 @@ function analyzeSlope() {
 
 function analyzeHiLow() {
 
-    if (nowValues.hilowLast > nowValues.hilowAvr * 3) {
+    if (nowValues.hilowLast > nowValues.hilowAvr * 2) {
         if (nowValues.close > nowValues.sellTarget) {
             nowValues.outcome += RATE_HILOW * (1 + 0.5 * (nowValues.hilowLast / nowValues.hilowAvr))
                                 + RATE_HILOW * (nowValues.close - nowValues.sellTarget) / nowValues.close;
@@ -399,14 +400,13 @@ function keepLog() {
             nowValues.low,
             nowValues.close,
             nowValues.volume,
-            nowValues.volumeAvr,
             nowValues.volumeLast,
-            nowValues.histogram,
-            (nowValues.histoSign) ? 'H' : '',
+            roundTo(nowValues.volumeLast / nowValues.volumeAvr,2),
+            (nowValues.histoSign) ? 'H' : ' ',
             nowValues.slopeLast,
             nowValues.slopeSign,
             nowValues.hilowLast,
-            nowValues.hilowAvr,
+            roundTo(nowValues.hilowLast / nowValues.hilowAvr,2),
             nowValues.dNow,
             nowValues.kNow,
             nowValues.outcome,
@@ -421,7 +421,7 @@ function keepLog() {
     // sometimes write value header
     const d = new Date(nowValues.epoch);
     if (d.getMinutes() > 55 && (d.getHours() % 6 === 1)) {
-        const head = 'coin, date time  ,    high,     low,   close,  vol, vAvr, vLast, histo, sign, slope, sign, hilow, hilowA, d, k, outcome, B/S, msg';
+        const head = 'coin, date time  ,    high,     low,   close,  vol, vLast, volP, Hsign, slope, sign, hilow, hilowP, d, k, outcome, B/S, msg';
         stream.write(head + EOL);
     }
 }
@@ -456,10 +456,11 @@ function listener({epochs, highs, lows, closes, volumes}) {
     }
 
     if (lastbithumb) {
-        appendMsg('CW begin to response now, idle was [' + lastsame + ']');
+        appendMsg('CW begin to response now from ' + dateFormat(lastepoch * 1000) + ', idle was [' + lastbithumb + ']');
+        nowValues.outcome += 200;
         lastbithumb = 0;
-        lastsame = 0;
     }
+    lastepoch = epochs[tableLen - 1];
 
     const macds = calculateMACD(closes);
     const stochastic = calculateStochastic(highs, lows, closes);
@@ -486,7 +487,7 @@ function listener({epochs, highs, lows, closes, volumes}) {
     nowValues.periodMax = Math.max(...highs);
     nowValues.periodMin = Math.min(...lows);
 
-    nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 1);
+    // nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 1);
     nowValues.histoSign = isSignChanged(macds[tableSize - 2].histogram,macds[tableSize-1].histogram)
         || isSignChanged(macds[tableSize - 3].histogram,macds[tableSize-1].histogram);
 
@@ -524,7 +525,7 @@ function listener({epochs, highs, lows, closes, volumes}) {
 
     if (nowValues.outcome > 100) {
         nowValues.outcomes = roundTo(outcomes.reduce((o1, o2) => o1 + o2),1);
-        if (nowValues.outcomes >= 300) {
+        if (nowValues.outcomes >= RATE_INFORM) {
             nowValues.outText = '';
             outMsgs.forEach((m, idx) => {
                 if (m !== '') {

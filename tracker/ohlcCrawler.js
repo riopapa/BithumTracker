@@ -30,13 +30,13 @@ log4js_extend(log4js, {
     path: __dirname,
     format: '(@name:@line:@column)'
 });
-const logger = log4js.getLogger('ohlccrawler:' + currency);
+const logger = log4js.getLogger('ohlc:' + currency);
 
 const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/' + currency + 'krw/ohlc?periods=180';
 
-let rollers = require('streamroller');
-let stream = new rollers.RollingFileStream(LOG + currency + '/ohlc_raw.log', 5000000, 2);
-let streamcw = new rollers.RollingFileStream(LOG + currency + '/cw_cost.log', 5000000, 2);
+// let rollers = require('streamroller');
+// let stream = new rollers.RollingFileStream(LOG + currency + '/ohlc_raw.log', 5000000, 2);
+// let streamcw = new rollers.RollingFileStream(LOG + currency + '/cw_cost.log', 5000000, 2);
 const dateText = (epoch) => momenttimezone(epoch * 1000).tz(TIMEZONE).format('MM-DD HH:mm');
 
 const events = require('events');
@@ -84,11 +84,11 @@ function ohlcBuild (cwArray) {
 
     const indexedCw = cwArray.filter((e, i) => indexFilter(i));
 
-    const zerostrs = indexedCw.filter((e) => containZero(e)).map((e, i) => [ i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1) ]);
-    if (zerostrs.length > 0) {
-        logger.debug('excluding [' + zerostrs.length + '] zero array(s)');
-        stream.write(dateText(cwArray[cwArray.length - 1][0]) +', {' + JSON.stringify(zerostrs) + ' }' + EOL);
-    }
+    // const zerostrs = indexedCw.filter((e) => containZero(e)).map((e, i) => [ i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1) ]);
+    // if (zerostrs.length > 0) {
+    //     logger.debug('excluding [' + zerostrs.length + '] zero array(s)');
+    //     // stream.write(dateText(cwArray[cwArray.length - 1][0]) +', {' + JSON.stringify(zerostrs) + ' }' + EOL);
+    // }
 
     let epochs = [];
     let highs = [];
@@ -111,14 +111,14 @@ function ohlcBuild (cwArray) {
 function reviewCost() {
     return;
 
-    const cost = Number(responseBody.allowance.cost);
-    const remain = Number(responseBody.allowance.remaining);
-    const remainPercent = remain / (cost + remain);
-    const date = momenttimezone(new Date()).tz(TIMEZONE).format('MM-DD HH:mm');
-    streamcw.write(date + ', ' + cost + ' + ' + remain+ '= ' + (cost + remain)  + ', ' + remainPercent + EOL);
-    if ( remainPercent < 0.1) {
-        logger.error('[allowance] remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
-    }
+    // const cost = Number(responseBody.allowance.cost);
+    // const remain = Number(responseBody.allowance.remaining);
+    // const remainPercent = remain / (cost + remain);
+    // const date = momenttimezone(new Date()).tz(TIMEZONE).format('MM-DD HH:mm');
+    // streamcw.write(date + ', ' + cost + ' + ' + remain+ '= ' + (cost + remain)  + ', ' + remainPercent + EOL);
+    // if ( remainPercent < 0.1) {
+    //     logger.error('[allowance] remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
+    // }
 }
 
 // ohlcCrawler();

@@ -23,12 +23,12 @@ exports.sendSlack = (line, title, url) => sendMarkDownedText(line, title, url);
 
 function sendTextOnly(text) {
     requestMessage(buildMessage(BOT_ICON, text));
-    logger.debug(replaceall('\n', '; ', text));
+    logger.debug(BOT_ICON + ' ' + replaceall('\n', '; ', text));
 }
 
 function sendWithAttach(iconName, text, attachs) {
     requestMessage(buildMessage(iconName, text, attachs));
-    logger.debug(replaceall('\n', '; ', text));
+    logger.debug(iconName + ' ' + replaceall('\n', '; ', text));
 }
 
 function buildMessage(iconName, text, attachs = null) {
@@ -67,7 +67,7 @@ function sendMarkDownedText(line, title, url) {
             .setIconURL(ICON_URL + BOT_ICON + '.png')
             .enableUnfurlLinks()
             .send((err) => { if (err) throw err; });
-        logger.debug(replaceall('\n', '; ', title));
+        logger.debug(BOT_ICON + ' ' + replaceall('\n', '; ', title));
     } catch(e) {
         logger.error(e);
     }

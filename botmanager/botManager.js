@@ -97,7 +97,7 @@ let adjustConfig = (match) => {
     const response = (value) => adjustSellBuy(cointype, value);
     Promise.try(() => bhttp.get(CRYPTOWATCH_URL +  cointype + 'krw/price'))
         .then(response)
-        .then(() => show.info(cointype, 'Sell, Buy Price Adjusted'))
+        .then(() => show.info(cointype, 'Sell, Buy Price Adjusted '))
         .catch(e => logger.error(e));
 };
 
