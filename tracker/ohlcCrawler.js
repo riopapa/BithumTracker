@@ -1,12 +1,12 @@
 const roundTo = require('round-to');
-const momenttimezone = require('moment-timezone');
+// const momenttimezone = require('moment-timezone');
 const TIMEZONE = 'Asia/Seoul';
-const EOL = require('os').EOL;
+// const EOL = require('os').EOL;
 const format = require('string-format');
 format.extend(String.prototype);
 const json = require('json-file');
-const numeral = require('numeral');
-const pad = require('pad');
+// const numeral = require('numeral');
+// const pad = require('pad');
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
 
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE;
@@ -37,7 +37,7 @@ const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/' + currency +
 // let rollers = require('streamroller');
 // let stream = new rollers.RollingFileStream(LOG + currency + '/ohlc_raw.log', 5000000, 2);
 // let streamcw = new rollers.RollingFileStream(LOG + currency + '/cw_cost.log', 5000000, 2);
-const dateText = (epoch) => momenttimezone(epoch * 1000).tz(TIMEZONE).format('MM-DD HH:mm');
+// const dateText = (epoch) => momenttimezone(epoch * 1000).tz(TIMEZONE).format('MM-DD HH:mm');
 
 const events = require('events');
 const emitter = new events.EventEmitter();

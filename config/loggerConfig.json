@@ -11,7 +11,7 @@
     "file": {
       "type": "file",
       "filename": "./log/coin.log",
-      "maxLogSize": 200000
+      "maxLogSize": 20000
     }
   },
   "categories": {

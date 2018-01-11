@@ -328,12 +328,12 @@ function analyzeSlope() {
     if (nowValues.close < nowValues.pClose[2] * (1 - config.updown)) {
         nowValues.tradeType = SELL;
         nowValues.outcome += RATE_SLOPE * (0.8 * (nowValues.pClose[2] - nowValues.close) / nowValues.close);
-        appendMsg('▽▽Fast Price DOWN▽▽ (' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
+        appendMsg('DOWN Fast Price(' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
     }
     else if (nowValues.close > nowValues.pClose[2] * (1 + config.updown)) {
         nowValues.tradeType = BUY;
         nowValues.outcome += RATE_SLOPE * (0.8 * (nowValues.close - nowValues.pClose[2]) / nowValues.close);
-        appendMsg('△△Fast Price UP△△ (' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
+        appendMsg('UP Fast Price(' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
     }
 }
 
