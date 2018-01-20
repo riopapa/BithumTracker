@@ -47,7 +47,7 @@ const USERS = process.env.USERS.split(',');
 const BOT_TOKEN = process.env.BOT_TOKEN; // for #cryptocurrency & #cointest
 
 function showUsage() {
-    const header =  'Monitor CrytoCoins [' + process.env.COINS_KEY + ']';
+    const header =  'Monitor CryptoCoins [' + process.env.COINS_KEY + ']';
     const usage = '*USAGE*\n' +
         '*sb* _{currency}{subcommand}{amount}_\n' +
         '      {' + coins_cmd + 'n}  {bsagun*}  {(+-)123(k%)}\n' +

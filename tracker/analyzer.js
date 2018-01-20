@@ -65,13 +65,14 @@ watcher.on('change', (info) => {
 
 });
 
-const volumeCOUNT = 4;   // if recent volume goes high then...
+const volumeCOUNT = 3;   // if recent volume goes high then...
 const volumeCOUNTMAX = volumeCOUNT * 6;
 const slopeCOUNT = 3;   // if price varying slope is high then...
 const slopeCOUNTMAX = slopeCOUNT * 6;
 const hilowCOUNT = 3;   // if price varying slope is high then...
 const hilowCOUNTMAX = hilowCOUNT * 5;
 const ohlcCrawler = require('./ohlcCrawler.js');
+
 ohlcCrawler.getEmitter().on('event', listener);
 
 const SELL = 'S';
@@ -258,7 +259,7 @@ function analyzeBoundary() {
 
     if (nowValues.close > config.sellPrice) {
         nowValues.tradeType = SELL;
-        let msg = '△△Go over SELL boundary△△ (' + sellBoundaryCount + ')';
+        let msg = 'Go over SELL boundary (' + sellBoundaryCount + ')';
         nowValues.outcome += RATE_BOUNDARY * (0.5 + 30 * (nowValues.close - config.sellPrice) / nowValues.close);
         if (sellBoundaryCount++ > 3) {   // if goes over boundary several times, then adjust boundary temperary
             config.sellPrice = roundTo(nowValues.close * (1 + config.gapAllowance),config.priceRadix + 1);
@@ -269,7 +270,7 @@ function analyzeBoundary() {
     }
     else if (nowValues.close < config.buyPrice) {
         nowValues.tradeType = BUY;
-        let msg = '▽▽Go under BUY boundary▽▽ (' + buyBoundaryCount + ')';
+        let msg = 'Go under BUY boundary (' + buyBoundaryCount + ')';
         nowValues.outcome += RATE_BOUNDARY * (0.5 + 30 * (config.buyPrice - nowValues.close) / nowValues.close);
         if (buyBoundaryCount++ > 3) {
             config.buyPrice = roundTo(nowValues.close * (1 - config.gapAllowance), config.priceRadix + 1);
@@ -293,16 +294,16 @@ function analyzeVolume() {
     const volumeRATE = 2.5;
     if (nowValues.volumeLast > nowValues.volumeAvr * volumeRATE) {
         msg = 'Big Volume (>' + roundTo(nowValues.volumeLast / nowValues.volumeAvr * 100,0) + '%), ';
-        nowValues.outcome += RATE_VOLUME * (nowValues.volumeLast / nowValues.volumeAvr - 1);
+        nowValues.outcome += RATE_VOLUME * (nowValues.volumeLast / nowValues.volumeAvr - 1.5)  * (nowValues.volumeLast / nowValues.volumeAvr - 1.5);
         if (nowValues.close > nowValues.sellTarget) {
             nowValues.tradeType = SELL;
             msg += 'SELL ?';
-            nowValues.outcome += RATE_VOLUME * 0.3;
+            nowValues.outcome += RATE_VOLUME * 0.5;
         }
         else if (nowValues.close < nowValues.buyTarget) {
             nowValues.tradeType = BUY;
             msg += 'BUY ?';
-            nowValues.outcome += RATE_VOLUME * 0.3;
+            nowValues.outcome += RATE_VOLUME * 0.5;
         }
         else {
             msg += 'BUY/SELL ?';
@@ -321,7 +322,7 @@ function analyzeVolume() {
 function analyzeSlope() {
 
     if (nowValues.slopeLast > 0.002 && nowValues.slopeLast > nowValues.slopeAvr * 2.5) {
-        nowValues.outcome += RATE_SLOPE * (0.5 + 0.3 * (nowValues.slopeLast / nowValues.slopeAvr));
+        nowValues.outcome += RATE_SLOPE * (0.1 + 0.1 * (nowValues.slopeLast / nowValues.slopeAvr) * (nowValues.slopeLast / nowValues.slopeAvr));
         appendMsg('Rapid Slope Change (' +  npercent(nowValues.slopeLast / nowValues.slopeAvr) + ') [' + nowValues.slopeSign + ']');
     }
 
@@ -457,7 +458,7 @@ function listener({epochs, highs, lows, closes, volumes}) {
 
     if (lastbithumb) {
         appendMsg('CW begin to response now from ' + dateFormat(lastepoch * 1000) + ', idle was [' + lastbithumb + ']');
-        nowValues.outcome += 200;
+        nowValues.outcome += 100;
         lastbithumb = 0;
     }
     lastepoch = epochs[tableLen - 1];
