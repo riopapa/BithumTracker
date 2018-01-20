@@ -70,6 +70,9 @@ let ohlcCrawler = () => {
             else if (e.code === 'ECONNRESET') {
                 logger.info('cw connect reset');
             }
+            else if (e.code === '606') {
+                logger.info('cw connection timeout');
+            }
             else {
                 logger.error(e);
             }

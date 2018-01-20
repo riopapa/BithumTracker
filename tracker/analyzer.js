@@ -100,13 +100,14 @@ let bithumbCrawler = () => {
                 const price = Number(response.body.data.closing_price);
                 const ts = Number(response.body.data.date);
                 const msg = 'Bithumb' + npad(Number(price)) + ', ' + dateFormat(new Date(ts));
-                logger.info(msg + ', SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) + ' [' + lastsame + ']' );
+                notifier.warn(msg, 'SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) + ' [' + lastsame + ']' );
             }
             else {
                 korbitCrawler();
             }
         }).catch((e) => {
-        logger.error(e);
+            logger.error('Error while accesing bithumb');
+            logger.error(e);
     });
 };
 
@@ -118,9 +119,10 @@ let korbitCrawler = () => {
             const ts = Number(body.timestamp);
             const price = Number(body.last);
             const msg = 'KORBIT' + npad(price) + ', ' + dateFormat(new Date(ts));
-            logger.warn(msg + ', No Response from BITHUMB (' + CURRENCY + ') and from CW since ' + dateFormat(lastepoch * 1000) );
+            notifier.warn(msg, 'No Response from BITHUMB (' + CURRENCY + ') and from CW since ' + dateFormat(lastepoch * 1000) );
         }).catch((e) => {
-        logger.error(e);
+            logger.error('Error while accesing korbit');
+            logger.error(e);
     });
 };
 
@@ -134,7 +136,7 @@ let korbitCrawler = () => {
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
         logger.debug(dateFormat(epoch * 1000) + ' is same as before ' + lastsame);
-        if (++lastsame % 10 === 9) {
+        if (++lastsame % 8 === 7) {
             bithumbCrawler();
             lastbithumb++;
         }
@@ -294,7 +296,7 @@ function analyzeVolume() {
     const volumeRATE = 2.5;
     if (nowValues.volumeLast > nowValues.volumeAvr * volumeRATE) {
         msg = 'Big Volume (>' + roundTo(nowValues.volumeLast / nowValues.volumeAvr * 100,0) + '%), ';
-        nowValues.outcome += RATE_VOLUME * (nowValues.volumeLast / nowValues.volumeAvr - 1.5)  * (nowValues.volumeLast / nowValues.volumeAvr - 1.5);
+        nowValues.outcome += RATE_VOLUME * (nowValues.volumeLast / nowValues.volumeAvr - 1.2)  * (nowValues.volumeLast / nowValues.volumeAvr - 1.2);
         if (nowValues.close > nowValues.sellTarget) {
             nowValues.tradeType = SELL;
             msg += 'SELL ?';
