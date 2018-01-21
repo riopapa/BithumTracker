@@ -132,7 +132,7 @@ let updateConfig = (match) => {
         process.exit(11);
     }
     fs.writeFileSync(configFile, JSON.stringify(cf, null, 2), 'utf-8');
-    logger.debug('Update configration completed..');
+    logger.debug(c.coin + ' configration updated..');
 };
 
 /**

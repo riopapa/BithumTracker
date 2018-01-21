@@ -240,12 +240,12 @@ function analyzeStochastic() {
     if ((nowValues.dLast >= 80 && nowValues.kLast >= 80) && (nowValues.dNow < 80 || nowValues.kNow < 80) && nowValues.close >= nowValues.sellTarget) {
         nowValues.tradeType = SELL;
         msg = 'Stochastic (d,k) SELL SELL';
-        nowValues.outcome += RATE_STOCHASTIC * (0.5 + 0.03 * (nowValues.dLast + nowValues.kLast - nowValues.dNow - nowValues.kNow));
+        nowValues.outcome += RATE_STOCHASTIC * (0.5 + 0.05 * (nowValues.dLast + nowValues.kLast - nowValues.dNow - nowValues.kNow));
     }
     else if ((nowValues.dLast <= 20 && nowValues.kLast <= 20) && (nowValues.dNow > 20 || nowValues.kNow > 20) && nowValues.close <= nowValues.buyTarget) {
         nowValues.tradeType = BUY;
         msg = 'Stochastic (d,k) BUY BUY';
-        nowValues.outcome += RATE_STOCHASTIC * (0.5 + 0.03 * (nowValues.dNow + nowValues.kNow - nowValues.dLast - nowValues.kLast));
+        nowValues.outcome += RATE_STOCHASTIC * (0.5 + 0.05 * (nowValues.dNow + nowValues.kNow - nowValues.dLast - nowValues.kLast));
     }
     appendMsg(msg);
 }
@@ -262,7 +262,7 @@ function analyzeBoundary() {
     if (nowValues.close > config.sellPrice) {
         nowValues.tradeType = SELL;
         let msg = 'Go over SELL boundary (' + sellBoundaryCount + ')';
-        nowValues.outcome += RATE_BOUNDARY * (0.5 + 30 * (nowValues.close - config.sellPrice) / nowValues.close);
+        nowValues.outcome += RATE_BOUNDARY * (0.7 + 50 * (nowValues.close - config.sellPrice) / nowValues.close);
         if (sellBoundaryCount++ > 3) {   // if goes over boundary several times, then adjust boundary temperary
             config.sellPrice = roundTo(nowValues.close * (1 + config.gapAllowance),config.priceRadix + 1);
             sellBoundaryCount = 0;
@@ -273,7 +273,7 @@ function analyzeBoundary() {
     else if (nowValues.close < config.buyPrice) {
         nowValues.tradeType = BUY;
         let msg = 'Go under BUY boundary (' + buyBoundaryCount + ')';
-        nowValues.outcome += RATE_BOUNDARY * (0.5 + 30 * (config.buyPrice - nowValues.close) / nowValues.close);
+        nowValues.outcome += RATE_BOUNDARY * (0.7 + 50 * (config.buyPrice - nowValues.close) / nowValues.close);
         if (buyBoundaryCount++ > 3) {
             config.buyPrice = roundTo(nowValues.close * (1 - config.gapAllowance), config.priceRadix + 1);
             buyBoundaryCount = 0;
@@ -324,18 +324,19 @@ function analyzeVolume() {
 function analyzeSlope() {
 
     if (nowValues.slopeLast > 0.002 && nowValues.slopeLast > nowValues.slopeAvr * 2.5) {
-        nowValues.outcome += RATE_SLOPE * (0.1 + 0.1 * (nowValues.slopeLast / nowValues.slopeAvr) * (nowValues.slopeLast / nowValues.slopeAvr));
-        appendMsg('Rapid Slope Change (' +  npercent(nowValues.slopeLast / nowValues.slopeAvr) + ') [' + nowValues.slopeSign + ']');
+        nowValues.outcome += RATE_SLOPE * (1 + 0.2 * (nowValues.slopeLast / nowValues.slopeAvr));
+        let UpDown = ((nowValues.pClose[2] - nowValues.close) < 0) ? 'UpUp' : 'DnDn';
+        appendMsg('Rapid Slope ' + UpDown + ' (' +  npercent(nowValues.slopeLast / nowValues.slopeAvr) + ') [' + nowValues.slopeSign + ']');
     }
 
     if (nowValues.close < nowValues.pClose[2] * (1 - config.updown)) {
         nowValues.tradeType = SELL;
-        nowValues.outcome += RATE_SLOPE * (0.8 * (nowValues.pClose[2] - nowValues.close) / nowValues.close);
+        nowValues.outcome += RATE_SLOPE * (1 + (nowValues.pClose[2] - nowValues.close) / nowValues.close);
         appendMsg('DOWN Fast Price(' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
     }
     else if (nowValues.close > nowValues.pClose[2] * (1 + config.updown)) {
         nowValues.tradeType = BUY;
-        nowValues.outcome += RATE_SLOPE * (0.8 * (nowValues.close - nowValues.pClose[2]) / nowValues.close);
+        nowValues.outcome += RATE_SLOPE * (1 + (nowValues.close - nowValues.pClose[2]) / nowValues.close);
         appendMsg('UP Fast Price(' + npercent((nowValues.close - nowValues.pClose[2]) / nowValues.pClose[2]) + ') [' + nowValues.slopeSign + ']');
     }
 }
@@ -351,12 +352,12 @@ function analyzeHiLow() {
 
     if (nowValues.hilowLast > nowValues.hilowAvr * 2) {
         if (nowValues.close > nowValues.sellTarget) {
-            nowValues.outcome += RATE_HILOW * (1 + 0.5 * (nowValues.hilowLast / nowValues.hilowAvr))
+            nowValues.outcome += RATE_HILOW * (0.8 + 0.5 * (nowValues.hilowLast / nowValues.hilowAvr))
                                 + RATE_HILOW * (nowValues.close - nowValues.sellTarget) / nowValues.close;
             appendMsg('Big HiLow (' +  npercent(nowValues.hilowLast / nowValues.hilowAvr) + ') SELL ???');
         }
         else if (nowValues.close < nowValues.buyTarget) {
-            nowValues.outcome += RATE_HILOW * (1 + 0.5 * (nowValues.hilowLast / nowValues.hilowAvr))
+            nowValues.outcome += RATE_HILOW * (0.8 + 0.5 * (nowValues.hilowLast / nowValues.hilowAvr))
                                 + RATE_HILOW * (nowValues.buyTarget - nowValues.close) / nowValues.close;
             appendMsg('Big HiLow (' +  npercent(nowValues.hilowLast / nowValues.hilowAvr) + ') BUY ???');
         }
