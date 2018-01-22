@@ -14,10 +14,10 @@ const COINS_KEY = process.env.COINS_KEY.split(',');
 
 let log4js = require('log4js');
 const logger = log4js.getLogger('replier:' + currency);
-const SpecialChars = ' ~!_-:|*@#=.;\`"^';
+// const SpecialChars = ' ~!_-:|*@#=.;\`"^';
 const BracketCharsL = '[{(< !|';
 const BracketCharsR = ']})> !|';
-const SpecialCharsLength = SpecialChars.length;
+// const SpecialCharsLength = SpecialChars.length;
 const BracketCharsLength = BracketCharsL.length;
 
 // exports.sendText = (text) => sendTextOnly(text);
@@ -35,7 +35,8 @@ function buildMessage(iconName, text, attachs = null) {
         token: WEB_TOKEN,
         channel: CHANNEL,
         as_user: false,
-        username: COINS_NAME[COINS_KEY.indexOf(iconName)] + SpecialChars.substr(deit % SpecialCharsLength, 1) +
+        coinName: COINS_NAME[COINS_KEY.indexOf(iconName)],
+        username: coinName.substr(0,deit % coinName.length - 1) + ' ' + coinName.substr(deit % coinName.length) + ' ' +
                     BracketCharsL.substr(deit % BracketCharsLength, 1) + iconName + BracketCharsR.substr(deit % BracketCharsLength, 1),
         icon_url: ICON_URL + iconName + '.png',
         text: ''

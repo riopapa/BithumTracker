@@ -307,8 +307,11 @@ function analyzeVolume() {
             msg += 'BUY ?';
             nowValues.outcome += RATE_VOLUME * 0.5;
         }
-        else {
-            msg += 'BUY/SELL ?';
+        else if (nowValues.close > nowValues.pClose[2] * 1.02) {
+            msg += 'UpUp';
+        }
+        else if (nowValues.close < nowValues.pClose[2] * 0.98) {
+            msg += 'DnDn';
         }
         appendMsg(msg);
     }
