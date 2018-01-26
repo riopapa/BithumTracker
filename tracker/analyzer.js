@@ -100,7 +100,7 @@ let bithumbCrawler = () => {
                 const price = Number(response.body.data.closing_price);
                 const ts = Number(response.body.data.date);
                 const msg = 'Bithumb' + npad(Number(price)) + ', ' + dateFormat(new Date(ts));
-                notifier.warn(msg, 'SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) + ' [' + lastsame + ']' );
+                notifier.warn(msg, 'SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) + ' [' + lastbithumb + ' / ' lastsame + ']' );
             }
             else {
                 korbitCrawler();
@@ -136,12 +136,13 @@ let korbitCrawler = () => {
 function isCWDead(epoch) {
     if (epoch === lastepoch) {
         logger.debug(dateFormat(epoch * 1000) + ' is same as before ' + lastsame);
-        if (++lastsame % 8 === 7) {
+        if (++lastsame % 10 === 9) {
             bithumbCrawler();
             lastbithumb++;
         }
         return true;
     }
+    lastepoch = epoch;
     return false;
 }
 
