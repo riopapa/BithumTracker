@@ -100,7 +100,7 @@ let bithumbCrawler = () => {
                 const price = Number(response.body.data.closing_price);
                 const ts = Number(response.body.data.date);
                 const msg = 'Bithumb' + npad(Number(price)) + ', ' + dateFormat(new Date(ts));
-                notifier.warn(msg, 'SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) + ' [' + lastbithumb + ' / ' lastsame + ']' );
+                notifier.warn(msg, 'SAME ' + CURRENCY + ' since ' + dateFormat(lastepoch * 1000) + ' [' + lastbithumb + ' / ' + lastsame + ']' );
             }
             else {
                 korbitCrawler();
