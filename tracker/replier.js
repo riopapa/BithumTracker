@@ -31,11 +31,11 @@ function sendWithAttach(iconName, text, attachs) {
 
 function buildMessage(iconName, text, attachs = null) {
     const deit = Date.now();
+    const coinName = COINS_NAME[COINS_KEY.indexOf(iconName)];
     const msg = {
         token: WEB_TOKEN,
         channel: CHANNEL,
         as_user: false,
-        coinName: COINS_NAME[COINS_KEY.indexOf(iconName)],
         username: coinName.substr(0,deit % coinName.length - 1) + ' ' + coinName.substr(deit % coinName.length) + ' ' +
                     BracketCharsL.substr(deit % BracketCharsLength, 1) + iconName + BracketCharsR.substr(deit % BracketCharsLength, 1),
         icon_url: ICON_URL + iconName + '.png',
