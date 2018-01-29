@@ -33,7 +33,7 @@
     "streamroller": "^0.5.2",
     "string-format": "^0.5.0",
     "sync-request": "^4.1.0",
-    "technicalindicators": "^1.0.20",
+    "technicalindicators": "1.0.20",
     "util": "^0.10.3",
     "watch-files": "^1.1.0",
     "zip-array": "^1.0.1"
