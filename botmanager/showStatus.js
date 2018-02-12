@@ -12,9 +12,9 @@ const replier = require('./replier.js');
 
 const NPAD_SIZE = Number(process.env.NPAD_SIZE);
 const npad = (number) => pad(NPAD_SIZE, numeral((number)).format('0,0'));
-const npadBlank = (number) => pad(NPAD_SIZE + 5, numeral((number)).format('0,0'));
+const npadBlank = (number) => pad(NPAD_SIZE + 5, numeral((number)).format('0,0.0'));
 const npercent = (number) => numeral(number * 100).format('0,0.00') + '%';
-const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/';
+// const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/';
 
 // CONFIGRATION && LOGGER
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
@@ -30,7 +30,8 @@ exports.action = () => waitForAction();
 
 function showCoinStatus(coin, msg) {
     const response = (value) => buildAttach(coin, value);
-    Promise.try(() => bhttp.get(CRYPTOWATCH_URL +  coin + 'krw/summary'))
+    const BIFINEX_URL = 'https://api.bitfinex.com/v2//tickers?symbols=t';
+    Promise.try(() => bhttp.get(BIFINEX_URL +  coin + 'USD'))
         .then(response)
         .then(attach => {
             replier.sendAttach(coin, msg, [attach]);
@@ -41,11 +42,13 @@ function showCoinStatus(coin, msg) {
 function buildAttach(coin, value) {
     try {
         const cf = JSON.parse(fs.readFileSync(CONFIG + coin.toLowerCase() + '/' + CONFIG_FILENAME));
-        const result = value.body.result;
-        const price = Number(result.price.last);
-        const high = Number(result.price.high);
-        const low = Number(result.price.low);
-        const changePercent = roundTo(Number(result.price.change.percentage),4);
+
+        //  [ SYMBOL, BID, BID_SIZE, ASK, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_PERC, LAST_PRICE, VOLUME, HIGH, LOW
+        // ["tBTCUSD",8699.9,32.98931434,8700,60.89457034,414.9,0.0501,8699.9,63897.8226561,9074.9,8270]
+        const price = Number(value.body[0][7]);
+        const high = Number(value.body[0][9]);
+        const low = Number(value.body[0][10]);
+        const changePercent = roundTo(Number(value.body[0][6]),4);
         // const changePrice = Number(result.price.change.absolute);
         let trendShort = true;
         let trendLastTitle = '';

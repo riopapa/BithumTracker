@@ -18,4 +18,4 @@ RUN mkdir -p /app/config
 
 VOLUME [ "/app/config", "/app/log" ]
 
-CMD node gatherCoin.js
+CMD node verifyStability.js

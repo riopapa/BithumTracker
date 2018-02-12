@@ -1,5 +1,5 @@
 
-const CHART_URL = 'https://cryptowat.ch/bithumb/';
+const CHART_URL = 'https://www.bithumb.com/tradingview/chartPopup/';
 const COINS_KEY = process.env.COINS_KEY.split(',');
 const COINS_CMD = process.env.COINS_CMD.split(',');
 
@@ -7,7 +7,7 @@ module.exports = class coinConfig {
     constructor(coin = 'BTC') {
         try {
             this.title =  coin + '(' + COINS_CMD[COINS_KEY.indexOf(coin)] + ')'; // Big blue head
-            this.title_link = CHART_URL + coin + 'krw/3m';
+            this.title_link = CHART_URL + coin;
             this.text = '';
             this.fields = [];
 

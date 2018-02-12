@@ -36,8 +36,8 @@ function buildMessage(iconName, text, attachs = null) {
         token: WEB_TOKEN,
         channel: CHANNEL,
         as_user: false,
-        username: coinName.substr(0,deit % coinName.length) + ' ' + coinName.substr(deit % coinName.length) + ' ' +
-                    BracketCharsL.substr(deit % BracketCharsLength, 1) + iconName + BracketCharsR.substr(deit % BracketCharsLength, 1),
+        username: coinName + '          '.substr(0,deit % 9) +
+            BracketCharsL.substr(deit % BracketCharsLength, 1) + iconName + BracketCharsR.substr(deit % BracketCharsLength, 1),
         icon_url: ICON_URL + iconName + '.png',
         text: ''
     };

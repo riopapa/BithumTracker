@@ -10,7 +10,7 @@
     },
     "file": {
       "type": "file",
-      "filename": "./log/coin.log",
+      "filename": "./log/stable.log",
       "maxLogSize": 20000
     }
   },

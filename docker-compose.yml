@@ -15,13 +15,13 @@ services:
   image: riopapa/coin_botmanager
 
 # --------------------------------------------
- gathercoin:
-  build:
-   context: ./gathercoin
-  volumes:
-   - ./log/:/app/log/
-   - ./config/:/app/config/
-  image: riopapa/coin_gathercoin
+# gathercoin:
+#  build:
+#   context: ./gathercoin
+#  volumes:
+#   - ./log/:/app/log/
+#   - ./config/:/app/config/
+#  image: riopapa/coin_gathercoin
 
 # --------------------------------------------
  tracker_bch:
@@ -75,4 +75,19 @@ services:
    - ./log/:/app/log/
    - ./config/:/app/config/
   image: riopapa/coin_tracker
+
+
+# --------------------------------------------
+ verify:
+  build:
+   context: ./verify
+  env_file:
+   - ./botmanager.env
+   - ./tracker.env
+  volumes:
+   - ./log/:/app/log/
+   - ./config/:/app/config/
+  image: riopapa/coin_verify
+
+# --------------------------------------------
 

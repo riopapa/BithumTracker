@@ -16,7 +16,7 @@ const show = require('./showStatus.js');
 const replier = require('./replier.js');
 const who = require('./getSlackName.js');
 const roundTo = require('round-to');
-const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/';
+// const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/';
 
 // CONFIGRATION && LOGGER
 const CONFIG = process.env.CONFIG;  // configuration folder with '/'
@@ -95,7 +95,8 @@ let adjustAllConfigs = (match) => {
 let adjustConfig = (match) => {
     const cointype = COINS_KEY[COINS_CMD.indexOf(match[1])];
     const response = (value) => adjustSellBuy(cointype, value);
-    Promise.try(() => bhttp.get(CRYPTOWATCH_URL +  cointype + 'krw/price'))
+    const BIFINEX_URL = 'https://api.bitfinex.com/v2//tickers?symbols=t';
+    Promise.try(() => bhttp.get(BIFINEX_URL +  cointype + 'USD'))
         .then(response)
         .then(() => show.info(cointype, 'Sell, Buy Price Adjusted '))
         .catch(e => logger.error(e));
@@ -252,9 +253,11 @@ function adjustSellBuy(cointype, value) {
     try {
         const configFile = CONFIG + cointype.toLowerCase() + '/' + CONFIG_FILENAME;
         const cf = JSON.parse(fs.readFileSync(configFile));
-        const price = Number(value.body.result.price);
-        cf.buyPrice = roundTo(price * (1 - cf.gapAllowance * 3),cf.priceRadix);
-        cf.sellPrice = roundTo(price * (1 + cf.gapAllowance * 3),cf.priceRadix);
+        //  [ SYMBOL, BID, BID_SIZE, ASK, ASK_SIZE, DAILY_CHANGE, DAILY_CHANGE_PERC, LAST_PRICE, VOLUME, HIGH,LOW
+        // ["tBTCUSD",8699.9,32.98931434,8700,60.89457034,414.9,0.0501,8699.9,63897.8226561,9074.9,8270]
+        const price = Number(value.body[0][7]);
+        cf.buyPrice = roundTo(price * (1 - cf.gapAllowance * 3),1); // cf.priceRadix);
+        cf.sellPrice = roundTo(price * (1 + cf.gapAllowance * 3),1); // cf.priceRadix);
         fs.writeFileSync(configFile, JSON.stringify(cf, null, 1), 'utf-8');
         // return show.attach(cointype, value);
     }

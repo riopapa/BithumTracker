@@ -31,8 +31,11 @@ log4js_extend(log4js, {
     format: '(@name:@line:@column)'
 });
 const logger = log4js.getLogger('ohlc:' + currency);
+const TRADE_INTERVAL = '1m';
+const TRADE_LIMIT = 100;
 
-const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/' + currency + 'krw/ohlc?periods=180';
+// const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/' + currency + 'krw/ohlc?periods=180';
+const BIFINEX_URL = 'https://api.bitfinex.com/v2/candles/trade:' + TRADE_INTERVAL + ':t' + CURRENCY + 'USD/hist?limit=' + TRADE_LIMIT+'&sort=1&start=';
 
 // let rollers = require('streamroller');
 // let stream = new rollers.RollingFileStream(LOG + currency + '/ohlc_raw.log', 5000000, 2);
@@ -42,26 +45,32 @@ const CRYPTOWATCH_URL = 'https://api.cryptowat.ch/markets/bithumb/' + currency +
 const events = require('events');
 const emitter = new events.EventEmitter();
 exports.getEmitter = () => emitter;
-let responseBody = {};
 let ohlcs = {};
 
 let ohlcCrawler = () => {
-    Promise.try(() => bhttp.get(CRYPTOWATCH_URL))
+    let starting = new Date();
+    starting -= 100 * 1000 * 60;   // LIMIT * 1000 milsec * INTERVAL
+    Promise.try(() => bhttp.get(BIFINEX_URL + starting))
         .then(response => {
+            // cw case
             // {"result":{"180":
             //     [[1512925200,17050000,17055000,16900000,16966000,223.30168,3788825900],
             //      [1512925380,16966000,17002000,16957000,16995000,21.02319,357074370]]
             // },"allowance":{"cost":2459681,"remaining":6840154909}}
-            responseBody = response.body;
-            let result = responseBody.result;
+
+            // bitfinext case
+            // https://api.bitfinex.com/v2//candles/trade:15m:tBTCUSD/hist?limit=5
+            // [ MTS,         OPEN,CLOSE, HIGH, LOW, VOLUME
+            // [1518255000000,8720,8755.5,8784.7,8719.8,570.8251072],
+            // ..
+            // [1518251400000,8790.8,8706.6,8790.8,8677,1132.13410577]
+            // ]
             try {
-                ohlcs = ohlcBuild(result['180']);
+                ohlcs = ohlcBuild(response.body);
             }
             catch (e) {
                 logger.error(e);
-                logger.error('result has no [180]' + JSON.stringify(responseBody).substr(0, 160));
             }
-            reviewCost ();
             emitter.emit('event', ohlcs);
         }).catch((e) => {
             if (e.code === 'ECONNREFUSED') {
@@ -80,48 +89,30 @@ let ohlcCrawler = () => {
 };
 
 function ohlcBuild (cwArray) {
-    // [ 0: CloseTime, 1: OpenPrice, 2:HighPrice, 3:LowPrice, 4:ClosePrice, 5:Volume ]
-
-    const indexFilter = (i) => (i % 4 === 0 || i > 400);
-    const containZero = (e) => (e[2] === 0 || e[3] === 0 || e[4] === 0);
-
-    const indexedCw = cwArray.filter((e, i) => indexFilter(i));
-
-    // const zerostrs = indexedCw.filter((e) => containZero(e)).map((e, i) => [ i, dateText(e[0]), e[1], e[2], e[3], e[4], roundTo(e[5],1) ]);
-    // if (zerostrs.length > 0) {
-    //     logger.debug('excluding [' + zerostrs.length + '] zero array(s)');
-    //     // stream.write(dateText(cwArray[cwArray.length - 1][0]) +', {' + JSON.stringify(zerostrs) + ' }' + EOL);
-    // }
-
+    // [ MTS,         OPEN,CLOSE, HIGH, LOW, VOLUME
     let epochs = [];
     let highs = [];
     let lows = [];
     let closes = [];
     let volumes = [];
-
+    let epoch = 0;
     let ohlcAppender = (e) => {
         epochs.push(e[0]);
-        highs.push(e[2]);
-        lows.push(e[3]);
-        closes.push(e[4]);
-        volumes.push(roundTo(e[5], 1));
+        closes.push(e[2]);
+        highs.push(e[3]);
+        lows.push(e[4]);
+        volumes.push(roundTo(e[5], 3));
     };
+    epoch = cwArray[0][0];
+    cwArray.forEach(e => ohlcAppender(e));
 
-    indexedCw.filter((e) => !containZero(e)).forEach(e => ohlcAppender(e));
+    // epochs.reverse();
+    // highs.reverse();
+    // lows.reverse();
+    // closes.reverse();
+    // volumes.reverse();
+
     return {epochs, highs, lows, closes, volumes};
-}
-
-function reviewCost() {
-    return;
-
-    // const cost = Number(responseBody.allowance.cost);
-    // const remain = Number(responseBody.allowance.remaining);
-    // const remainPercent = remain / (cost + remain);
-    // const date = momenttimezone(new Date()).tz(TIMEZONE).format('MM-DD HH:mm');
-    // streamcw.write(date + ', ' + cost + ' + ' + remain+ '= ' + (cost + remain)  + ', ' + remainPercent + EOL);
-    // if ( remainPercent < 0.1) {
-    //     logger.error('[allowance] remain:' + numeral(remain).format('0,0') + ' , in % ' + remainPercent);
-    // }
 }
 
 // ohlcCrawler();
