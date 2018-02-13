@@ -145,7 +145,7 @@ function getPrices() {
             let isZero = '';
             if (bitfinexPrice * cryptowatch_Price === 0 ||
                 ccxt_bitfinex_Price * ccxt_bithumb_Price * bithumb_Price === 0) {
-                isZero = 'zero';
+                isZero = 'zero case';
             }
             const str = [
                 secondFormat(new Date()),
