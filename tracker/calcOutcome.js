@@ -124,10 +124,10 @@ function calculate_Boundary(nv, cf, bd) {
 function calculate_Volume(nv) {
 
     let msg = '';
-    const volumeRATE = 2;
+    const volumeRATE = 3;
     if (nv.volumeLast > nv.volumeAvr * volumeRATE) {
         msg = 'Big Volume (>' + roundTo(nv.volumeLast / nv.volumeAvr * 100,0) + '%), ';
-        nv.outcome += RATE_VOLUME * (nv.volumeLast / nv.volumeAvr - 1.2)  * (nv.volumeLast / nv.volumeAvr - 1.2);
+        nv.outcome += RATE_VOLUME * (nv.volumeLast / nv.volumeAvr - 1.5)  * (nv.volumeLast / nv.volumeAvr - 1.5);
         if (nv.close > nv.sellTarget) {
             nv.tradeType = SELL;
             msg += 'SELL ?';

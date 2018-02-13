@@ -58,12 +58,12 @@ watcher.on('change', (info) => {
 let log4js = require('log4js');
 const logger = log4js.getLogger('analyzer:' + currency);
 
-const volumeCOUNT = 8;   // if recent volume goes high then...
-const volumeCOUNTMAX = volumeCOUNT * 5;
+const volumeCOUNT = 6;   // if recent volume goes high then...
+const volumeCOUNTMAX = volumeCOUNT * 6;
 const slopeCOUNT = 8;   // if price varying slope is high then...
 const slopeCOUNTMAX = slopeCOUNT * 5;
-const hilowCOUNT = 8;   // if price varying slope is high then...
-const hilowCOUNTMAX = hilowCOUNT * 5;
+const hilowCOUNT = 6;   // if price varying slope is high then...
+const hilowCOUNTMAX = hilowCOUNT * 6;
 const ohlcCrawler = require('./ohlcCrawler.js');
 
 ohlcCrawler.getEmitter().on('event', listener);
