@@ -185,8 +185,8 @@ function listener({epochs, highs, lows, closes, volumes, longMinMax} ) {
         lows.slice(highs.length - hilowCOUNT).reduce((l1, l2) => l1 + l2)) / hilowCOUNT,0);
 
     nowValues.epoch = epochs[tableLen - 1];
-    nowValues.high = highs[tableLen - 1];
-    nowValues.low = lows[tableLen - 1];
+    // nowValues.high = highs[tableLen - 1];
+    // nowValues.low = lows[tableLen - 1];
     nowValues.close = closes[tableLen - 1];
     nowValues.volume = volumes[tableLen - 1];
 

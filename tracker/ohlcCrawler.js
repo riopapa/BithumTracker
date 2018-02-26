@@ -67,10 +67,9 @@ function shortOHLC() {
             // ]
             try {
                 ohlcs = ohlcBuild(response.body);
-                logger.debug('shortOHLC ' + BIFINEX_SHORTURL);
-                logger.debug('short epoch ' + ohlcs.epochs[0]);
             }
             catch (e) {
+                console.log('short error');
                 logger.error(e);
             }
             // emitter.emit('event', ohlcs);
@@ -104,19 +103,8 @@ function longOHLC() {
             }
         })
         .catch((e) => {
-            logger.debug('crawler2 err');
-            if (e.code === 'ECONNREFUSED') {
-                logger.info('cw connect refused');
-            }
-            else if (e.code === 'ECONNRESET') {
-                logger.info('cw connect reset');
-            }
-            else if (e.code === '606') {
-                logger.info('cw connection timeout');
-            }
-            else {
-                logger.error(e);
-            }
+            logger.debug('long err');
+            logger.error(e);
         });
 }
 
@@ -128,24 +116,15 @@ function ohlcBuild (bitfinexArray) {
     let lows = [];
     let closes = [];
     let volumes = [];
-    // let epoch = 0;
     let ohlcAppender = (e) => {
         epochs.push(e[0]);
         closes.push(e[2]);
         highs.push(e[3]);
         lows.push(e[4]);
         volumes.push(roundTo(e[5], 3));
-        // console.log (momenttimezone(new Date(e[0])).tz(TIMEZONE).format('MM-DD HH:mm'));
     };
-    // epoch = bitfinexArray[0][0];
     bitfinexArray.forEach(e => ohlcAppender(e));
-
     // epochs.reverse();
-    // highs.reverse();
-    // lows.reverse();
-    // closes.reverse();
-    // volumes.reverse();
-
     return {epochs, highs, lows, closes, volumes};
 }
 
@@ -175,10 +154,9 @@ function ohlcBuild2 (bitfinexArray) {
 let ohlcCrawlerAll = () => {
     starting = new Date() - 100 * 1000 * 60;   // LIMIT * 1000 milsec * INTERVAL
     BIFINEX_SHORTURL = BIFINEX_URL + starting;
-    logger.debug('short url all ' + BIFINEX_SHORTURL);
     Promise.all([shortOHLC(), longOHLC()])
         .then (() => {
-            logger.info(momenttimezone(new Date(ohlcs.epochs[0])).tz(TIMEZONE).format('MM-DD HH:mm') + ' ~ ' + momenttimezone(new Date(ohlcs.epochs[ohlcs.epochs.length - 1])).tz(TIMEZONE).format('MM-DD HH:mm'));
+            // logger.info(momenttimezone(new Date(ohlcs.epochs[0])).tz(TIMEZONE).format('MM-DD HH:mm') + ' ~ ' + momenttimezone(new Date(ohlcs.epochs[ohlcs.epochs.length - 1])).tz(TIMEZONE).format('MM-DD HH:mm'));
             ohlcs.longMinMax = longMinMax;
             emitter.emit('event', ohlcs);
         })
