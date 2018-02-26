@@ -54,66 +54,71 @@ let longMinMax = {};
 let starting = new Date() - 100 * 1000 * 60;   // LIMIT * 1000 milsec * INTERVAL
 let BIFINEX_SHORTURL = BIFINEX_URL + starting;
 
-let shortOHLC = Promise.try(() => bhttp.get(BIFINEX_SHORTURL))
-    .then(response => {
-        console.log('shortOHLC ' + BIFINEX_SHORTURL);
-        // bitfinext case
-        // https://api.bitfinex.com/v2//candles/trade:15m:tBTCUSD/hist?limit=5
-        // [ MTS,         OPEN,CLOSE, HIGH, LOW, VOLUME
-        // [1518255000000,8720,8755.5,8784.7,8719.8,570.8251072],
-        // ..
-        // [1518251400000,8790.8,8706.6,8790.8,8677,1132.13410577]
-        // ]
-        try {
-            ohlcs = ohlcBuild(response.body);
-            console.log('short epoch ' + ohlcs.epochs[0]);
-        }
-        catch (e) {
-            logger.error(e);
-        }
-        // emitter.emit('event', ohlcs);
-    });
+function shortOHLC() {
+    return Promise.try(() => bhttp.get(BIFINEX_SHORTURL))
+        .then(response => {
+            logger.debug('shortOHLC ' + BIFINEX_SHORTURL);
+            // bitfinext case
+            // https://api.bitfinex.com/v2//candles/trade:15m:tBTCUSD/hist?limit=5
+            // [ MTS,         OPEN,CLOSE, HIGH, LOW, VOLUME
+            // [1518255000000,8720,8755.5,8784.7,8719.8,570.8251072],
+            // ..
+            // [1518251400000,8790.8,8706.6,8790.8,8677,1132.13410577]
+            // ]
+            try {
+                ohlcs = ohlcBuild(response.body);
+                logger.debug('shortOHLC ' + BIFINEX_SHORTURL);
+                logger.debug('short epoch ' + ohlcs.epochs[0]);
+            }
+            catch (e) {
+                logger.error(e);
+            }
+            // emitter.emit('event', ohlcs);
+        });
+}
 
-let longOHLC = Promise.try(() => bhttp.get(BIFINEX_LONGURL))
-    .then(response => {
-        try {
-            let ohlcs2 = ohlcBuild2(response.body);
-            let minClose = 9999999999;
-            let maxClose = 0;
-            let minEpoch = 0;
-            let maxEpoch = 0;
-            ohlcs2.closes.forEach((e,i) => {
-                if (e > maxClose) {
-                    maxClose = e;
-                    maxEpoch = ohlcs2.epochs[i];
-                }
-                if (e < minClose) {
-                    minClose = e;
-                    minEpoch = ohlcs2.epochs[i];
-                }
-            });
-            longMinMax = {minClose, minEpoch, maxClose, maxEpoch};
-            console.log('minClose ' + minClose);
-        }
-        catch (e) {
-            logger.error(e);
-        }
-    })
-    .catch((e) => {
-        console.log('crawler2 err');
-        if (e.code === 'ECONNREFUSED') {
-            logger.info('cw connect refused');
-        }
-        else if (e.code === 'ECONNRESET') {
-            logger.info('cw connect reset');
-        }
-        else if (e.code === '606') {
-            logger.info('cw connection timeout');
-        }
-        else {
-            logger.error(e);
-        }
-    });
+function longOHLC() {
+    return Promise.try(() => bhttp.get(BIFINEX_LONGURL))
+        .then(response => {
+            try {
+                let ohlcs2 = ohlcBuild2(response.body);
+                let minClose = 9999999999;
+                let maxClose = 0;
+                let minEpoch = 0;
+                let maxEpoch = 0;
+                ohlcs2.closes.forEach((e,i) => {
+                    if (e > maxClose) {
+                        maxClose = e;
+                        maxEpoch = ohlcs2.epochs[i];
+                    }
+                    if (e < minClose) {
+                        minClose = e;
+                        minEpoch = ohlcs2.epochs[i];
+                    }
+                });
+                longMinMax = {minClose, minEpoch, maxClose, maxEpoch};
+                logger.debug('minClose ' + minClose);
+            }
+            catch (e) {
+                logger.error(e);
+            }
+        })
+        .catch((e) => {
+            logger.debug('crawler2 err');
+            if (e.code === 'ECONNREFUSED') {
+                logger.info('cw connect refused');
+            }
+            else if (e.code === 'ECONNRESET') {
+                logger.info('cw connect reset');
+            }
+            else if (e.code === '606') {
+                logger.info('cw connection timeout');
+            }
+            else {
+                logger.error(e);
+            }
+        });
+}
 
 function ohlcBuild (bitfinexArray) {
 
@@ -170,16 +175,16 @@ function ohlcBuild2 (bitfinexArray) {
 let ohlcCrawlerAll = () => {
     starting = new Date() - 100 * 1000 * 60;   // LIMIT * 1000 milsec * INTERVAL
     BIFINEX_SHORTURL = BIFINEX_URL + starting;
-    console.log('short url all ' + BIFINEX_SHORTURL);
-    Promise.all([shortOHLC, longOHLC])
+    logger.debug('short url all ' + BIFINEX_SHORTURL);
+    Promise.all([shortOHLC(), longOHLC()])
         .then (() => {
-            console.log (momenttimezone(new Date(ohlcs.epochs[0])).tz(TIMEZONE).format('MM-DD HH:mm') + ' ~ ' + momenttimezone(new Date(ohlcs.epochs[ohlcs.epochs.length - 1])).tz(TIMEZONE).format('MM-DD HH:mm'));
+            logger.info(momenttimezone(new Date(ohlcs.epochs[0])).tz(TIMEZONE).format('MM-DD HH:mm') + ' ~ ' + momenttimezone(new Date(ohlcs.epochs[ohlcs.epochs.length - 1])).tz(TIMEZONE).format('MM-DD HH:mm'));
             ohlcs.longMinMax = longMinMax;
             emitter.emit('event', ohlcs);
         })
         .catch((e) => {
             logger.error(e);
-        })
+        });
 };
 
 // ohlcCrawlerAll();
