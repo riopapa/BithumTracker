@@ -149,7 +149,7 @@ function isSignChanged(before, after) {
  * @return none
  */
 
-function listener({epochs, highs, lows, closes, volumes}) {
+function listener({epochs, highs, lows, closes, volumes, longMinMax} ) {
 
     const tableLen = highs.length;
     nowValues.msgText = '';
@@ -189,11 +189,14 @@ function listener({epochs, highs, lows, closes, volumes}) {
     nowValues.low = lows[tableLen - 1];
     nowValues.close = closes[tableLen - 1];
     nowValues.volume = volumes[tableLen - 1];
-    nowValues.pEpoch = [epochs[tableLen - 5], epochs[tableLen - 10], epochs[tableLen - 15], epochs[Math.trunc(tableLen / 2)], epochs[0]] ;
-    nowValues.pClose = [closes[tableLen - 5], closes[tableLen - 10], closes[tableLen - 15], closes[Math.trunc(tableLen / 2)], closes[0]];
-    nowValues.pVolume = [volumes[tableLen - 5], volumes[tableLen - 10], volumes[tableLen - 15], volumes[Math.trunc(tableLen / 2)], volumes[0]] ;
-    nowValues.periodMax = Math.max(...highs);
-    nowValues.periodMin = Math.min(...lows);
+
+    nowValues.pEpoch = [epochs[tableLen - 4], epochs[tableLen - 8], epochs[tableLen - 12], epochs[tableLen - 16]];
+    nowValues.pClose = [closes[tableLen - 4], closes[tableLen - 8], closes[tableLen - 12], closes[tableLen - 16]]; // closes[Math.trunc(tableLen / 2)], closes[0]];
+    nowValues.pVolume = [volumes[tableLen - 4], volumes[tableLen - 8], volumes[tableLen - 12],  volumes[tableLen - 16]];
+    // nowValues.periodMax = Math.max(...highs);
+    // nowValues.periodMin = Math.min(...lows);
+
+    nowValues.longMinMax = longMinMax;
 
     // nowValues.histogram = roundTo(macds[tableSize - 1].histogram, 1);
     nowValues.histoSign = isSignChanged(macds[tableSize - 2].histogram,macds[tableSize-1].histogram)

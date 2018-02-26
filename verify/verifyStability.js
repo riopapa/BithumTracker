@@ -2,6 +2,8 @@ const Promise = require('bluebird');
 const bhttp = require('bhttp');
 const roundTo = require('round-to');
 let roller = require('streamroller');
+const json = require('json-file');
+
 let stream = new roller.RollingFileStream('./log/verify.csv', 100000, 5);
 // const json = require('json-file');
 // const CONFIG = process.env.CONFIG;  // configuration folder with '/'
@@ -69,7 +71,7 @@ function mainloop() {
     // console.log(usd2krw);
     const dt = new Date();
     if (dt.getMinutes() > 58 || isFirst) {
-        stream.write('date time     , bfxUSD, cw_KRW, ccxtbfxUSD, ccxtbithumb, bithumb\n');
+        stream.write('date time     , bfxUSD, cw_KRW, ccxtbfxUSD, ccxtbithumb, bithumb, coinone\n');
         isFirst = false;
     }
     getPrices();
@@ -147,6 +149,7 @@ function getPrices() {
                 ccxt_bitfinex_Price * ccxt_bithumb_Price * bithumb_Price === 0) {
                 isZero = 'zero case';
             }
+            let delta = bithumb_Price - coin1_Price;
             const str = [
                 secondFormat(new Date()),
                 bitfinexPrice,
@@ -154,7 +157,8 @@ function getPrices() {
                 ccxt_bitfinex_Price,
                 ccxt_bithumb_Price,
                 bithumb_Price,
-                isZero
+                isZero,
+                delta
             ].join(', ');
             stream.write(str + '\n');
             console.log(str);

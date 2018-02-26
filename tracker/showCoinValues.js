@@ -22,6 +22,10 @@ function buildAttach(nv, cf) {
             prev += momenttimezone(new Date(nv.pEpoch[i])).tz(TIMEZONE).format('DD HH:mm');
             prev += npad(nv.pClose[i]) + '(' + npercent((nv.close - nv.pClose[i]) / nv.pClose[i]) + ') ' + nv.pVolume[i] + '\n';
         }
+        prev += '\n' + momenttimezone(new Date(nv.longMinMax.minEpoch)).tz(TIMEZONE).format('DD HH:mm');
+        prev += npad(nv.longMinMax.minClose) + '(' + npercent((nv.close - nv.longMinMax.minClose) / nv.longMinMax.minClose) + ') min\n';
+        prev += momenttimezone(new Date(nv.longMinMax.maxEpoch)).tz(TIMEZONE).format('DD HH:mm');
+        prev += npad(nv.longMinMax.maxClose) + '(' + npercent((nv.close - nv.longMinMax.maxClose) / nv.longMinMax.maxClose) + ') max\n';
         // const delta = (nv.periodMax - nv.periodMin) / nv.slopeBar.length;
         // prev += 'm(' + numeral((nv.close - nv.periodMin ) / nv.periodMin * 100).format('0.0') + ')' +
         //     nv.slopeBar.substring((nv.close - nv.periodMin) / delta, 1) + 'v' +
