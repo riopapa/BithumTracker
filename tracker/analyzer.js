@@ -156,10 +156,10 @@ function listener({epochs, highs, lows, closes, volumes, longMinMax} ) {
     nowValues.outcome = 0;
     if (isFirstTime) {
         calc.msg(nowValues, 'Just Started..');
-        nowValues.outcome = 999;
+        nowValues.outcome = RATE_INFORM;
         isFirstTime = false;
-        outcomes = [0, 0, 0, 0];
-        outMsgs = ['', '', '', ''];
+        outcomes = [0, 0, 0];
+        outMsgs = ['', '', ''];
     }
     else if (isBFXDead(epochs[tableLen - 1])) {
         return null;
@@ -190,9 +190,9 @@ function listener({epochs, highs, lows, closes, volumes, longMinMax} ) {
     nowValues.close = closes[tableLen - 1];
     nowValues.volume = volumes[tableLen - 1];
 
-    nowValues.pEpoch = [epochs[tableLen - 4], epochs[tableLen - 8], epochs[tableLen - 12], epochs[tableLen - 16]];
-    nowValues.pClose = [closes[tableLen - 4], closes[tableLen - 8], closes[tableLen - 12], closes[tableLen - 16]]; // closes[Math.trunc(tableLen / 2)], closes[0]];
-    nowValues.pVolume = [volumes[tableLen - 4], volumes[tableLen - 8], volumes[tableLen - 12],  volumes[tableLen - 16]];
+    nowValues.pEpoch = [epochs[tableLen - 1], epochs[tableLen - 2], epochs[tableLen - 3], epochs[tableLen - 4]];
+    nowValues.pClose = [closes[tableLen - 1], closes[tableLen - 2], closes[tableLen - 3], closes[tableLen - 4]]; // closes[Math.trunc(tableLen / 2)], closes[0]];
+    nowValues.pVolume = [volumes[tableLen - 1], volumes[tableLen - 2], volumes[tableLen - 3],  volumes[tableLen - 4]];
     // nowValues.periodMax = Math.max(...highs);
     // nowValues.periodMin = Math.min(...lows);
 

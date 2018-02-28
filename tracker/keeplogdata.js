@@ -57,7 +57,7 @@ function keep_log(nv) {
     // sometimes write value header
     const d = new Date(nv.epoch);
     if (d.getMinutes() > 58 && (d.getHours() % 3 === 1)) {
-        const head = 'coin, date time  ,  close,  vol, vLast, volP, Hsign, slope, sign, hilow, hilowP, d, k, outcome, B/S, msg';
+        const head = 'coin, date time  ,  close,  bithumb, vol, vLast, volP, Hsign, slope, sign, hilow, hilowP, d, k, outcome, B/S, msg';
         streaml.write(head + EOL);
     }
 }

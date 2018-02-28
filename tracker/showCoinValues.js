@@ -26,6 +26,8 @@ function buildAttach(nv, cf) {
         prev += npad(nv.longMinMax.minClose) + '(' + npercent((nv.close - nv.longMinMax.minClose) / nv.longMinMax.minClose) + ') min\n';
         prev += momenttimezone(new Date(nv.longMinMax.maxEpoch)).tz(TIMEZONE).format('DD HH:mm');
         prev += npad(nv.longMinMax.maxClose) + '(' + npercent((nv.close - nv.longMinMax.maxClose) / nv.longMinMax.maxClose) + ') max\n';
+        prev += momenttimezone(new Date(nv.longMinMax.oldEpoch)).tz(TIMEZONE).format('DD HH:mm');
+        prev += npad(nv.longMinMax.oldClose) + '(' + npercent((nv.close - nv.longMinMax.oldClose) / nv.longMinMax.oldClose) + ') old\n';
         // const delta = (nv.periodMax - nv.periodMin) / nv.slopeBar.length;
         // prev += 'm(' + numeral((nv.close - nv.periodMin ) / nv.periodMin * 100).format('0.0') + ')' +
         //     nv.slopeBar.substring((nv.close - nv.periodMin) / delta, 1) + 'v' +

@@ -33,12 +33,12 @@ log4js_extend(log4js, {
 const logger = log4js.getLogger('ohlc:' + currency);
 const TRADE_INTERVAL = '1m';
 const TRADE_LIMIT = 80;
-const TRADE_INTERVAL2 = '15m';
-const TRADE_LIMIT2 = 20;
+const TRADE_INTERVAL_LONG = '15m';
+const TRADE_LIMIT_LONG = 20;        //  15m x 20 = 300m
 
 const BIFINEX_URL = 'https://api.bitfinex.com/v2/candles/trade:' + TRADE_INTERVAL + ':t' + CURRENCY + 'USD/hist?limit=' + TRADE_LIMIT+'&sort=1&start='; // array[0] = old
 
-const BIFINEX_LONGURL = 'https://api.bitfinex.com/v2/candles/trade:' + TRADE_INTERVAL2 + ':t' + CURRENCY + 'USD/hist?limit=' + TRADE_LIMIT2;       // array[0] = latest
+const BIFINEX_LONGURL = 'https://api.bitfinex.com/v2/candles/trade:' + TRADE_INTERVAL_LONG + ':t' + CURRENCY + 'USD/hist?limit=' + TRADE_LIMIT_LONG;       // array[0] = latest
 
 // let rollers = require('streamroller');
 // let stream = new rollers.RollingFileStream(LOG + currency + '/ohlc_raw.log', 5000000, 2);
@@ -57,7 +57,6 @@ let BIFINEX_SHORTURL = BIFINEX_URL + starting;
 function shortOHLC() {
     return Promise.try(() => bhttp.get(BIFINEX_SHORTURL))
         .then(response => {
-            logger.debug('shortOHLC ' + BIFINEX_SHORTURL);
             // bitfinext case
             // https://api.bitfinex.com/v2//candles/trade:15m:tBTCUSD/hist?limit=5
             // [ MTS,         OPEN,CLOSE, HIGH, LOW, VOLUME
@@ -66,7 +65,7 @@ function shortOHLC() {
             // [1518251400000,8790.8,8706.6,8790.8,8677,1132.13410577]
             // ]
             try {
-                ohlcs = ohlcBuild(response.body);
+                ohlcs = shortOHLCBuild(response.body);
             }
             catch (e) {
                 console.log('short error');
@@ -80,23 +79,25 @@ function longOHLC() {
     return Promise.try(() => bhttp.get(BIFINEX_LONGURL))
         .then(response => {
             try {
-                let ohlcs2 = ohlcBuild2(response.body);
+                let ohlcArrayLong = longOHLCBuild(response.body);
                 let minClose = 9999999999;
                 let maxClose = 0;
                 let minEpoch = 0;
                 let maxEpoch = 0;
-                ohlcs2.closes.forEach((e,i) => {
+                ohlcArrayLong.closes.forEach((e,i) => {
                     if (e > maxClose) {
                         maxClose = e;
-                        maxEpoch = ohlcs2.epochs[i];
+                        maxEpoch = ohlcArrayLong.epochs[i];
                     }
                     if (e < minClose) {
                         minClose = e;
-                        minEpoch = ohlcs2.epochs[i];
+                        minEpoch = ohlcArrayLong.epochs[i];
                     }
                 });
-                longMinMax = {minClose, minEpoch, maxClose, maxEpoch};
-                logger.debug('minClose ' + minClose);
+                let oldClose = ohlcArrayLong.closes[ohlcArrayLong.closes.length - 1];
+                let oldEpoch = ohlcArrayLong.epochs[ohlcArrayLong.epochs.length - 1];
+                longMinMax = {minClose, minEpoch, maxClose, maxEpoch, oldClose, oldEpoch};
+                // logger.debug('minClose ' + minClose);
             }
             catch (e) {
                 logger.error(e);
@@ -108,7 +109,7 @@ function longOHLC() {
         });
 }
 
-function ohlcBuild (bitfinexArray) {
+function shortOHLCBuild (bitfinexArray) {
 
     // [ MTS,         OPEN,CLOSE, HIGH, LOW, VOLUME
     let epochs = [];
@@ -129,7 +130,7 @@ function ohlcBuild (bitfinexArray) {
 }
 
 
-function ohlcBuild2 (bitfinexArray) {
+function longOHLCBuild (bitfinexArray) {
 
     // [ MTS,         OPEN,CLOSE, HIGH, LOW, VOLUME
     let epochs = [];

@@ -32,10 +32,10 @@ function inform_Trade(nv,cf) {
             const body = response.body;
             if (body.status === '0000') {
                 nv.bitkrw = Number(body.data.closing_price);
-                nv.bitepoch = Number(body.data.date);
+                // nv.bitepoch = Number(body.data.date);
             }
             else {
-                logger.error('response status error ' + response.body.status);
+                logger.error('response status error ' + body.status);
             }
         })
         .then (() => {
